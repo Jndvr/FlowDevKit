@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowDevKit</title>
+  <link rel="stylesheet" href="shared/styles.css" />
+</head>
+<body class="sidepanel">
+
+  <div class="header">
+    <div class="header-logo"><img src="icons/icon128.png" alt="FlowDevKit"></div>
+    <span class="header-title">FlowDevKit</span>
+    <button class="icon-btn active" id="undockBtn" title="Close side panel" style="display:none"><i class="bi bi-layout-sidebar-reverse"></i></button>
+    <button class="icon-btn" id="themeToggle" title="Toggle theme"><i class="bi bi-sun"></i></button>
+    <button class="icon-btn" id="settingsBtn" title="Settings"><i class="bi bi-gear"></i></button>
+  </div>
+  <div class="flow-strip" id="flowStrip" style="display:none">
+    <div class="flow-strip-icon-box"><i class="bi bi-lightning-charge"></i></div>
+    <div class="flow-strip-info">
+      <span class="flow-strip-name" id="flowStripName"></span>
+      <div class="flow-strip-env-row">
+        <span class="flow-strip-dot"></span>
+        <span class="flow-strip-env" id="flowStripEnv"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-row">
+      <span class="settings-label">Region</span>
+      <div class="seg" id="regionSeg">
+        <button class="seg-btn active" data-region="emea">EMEA</button>
+        <button class="seg-btn" data-region="unitedstates">US</button>
+        <button class="seg-btn" data-region="asia">Asia</button>
+        <button class="seg-btn" data-region="australia">AU</button>
+        <button class="seg-btn" data-region="canada">CA</button>
+        <button class="seg-btn" data-region="india">IN</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Custom host</span>
+      <input class="settings-input" id="customHost" placeholder="e.g. gov.api.flow.microsoft.com" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Format</span>
+      <div class="mode-seg">
+        <button class="mode-seg-btn" id="modeDefinition" data-mode="definition">Definition only<small>triggers + actions</small></button>
+        <button class="mode-seg-btn active" id="modeFull" data-mode="full">Full export<small>+ connectionRefs</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Undo last paste — hidden until a snapshot exists in session storage -->
+    <div id="undoPasteWrap" style="display:none;position:relative">
+      <button class="tool-btn" id="undoPasteBtn" style="border-color:var(--warn);color:var(--warn);width:100%">
+        <i class="bi bi-arrow-counterclockwise"></i>Undo Last Paste
+      </button>
+      <button id="undoDismissBtn" style="position:absolute;top:3px;right:5px;background:none;border:none;color:var(--text-3);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px" title="Dismiss">✕</button>
+    </div>
+
+    <!-- Context refresh — shown when context may be stale (tab switched) -->
+    <div id="contextBanner" style="display:none;background:var(--warn-dim);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:7px 10px;font-size:11px;color:var(--warn);display:none;align-items:center;gap:8px">
+      <i class="bi bi-exclamation-triangle" style="flex-shrink:0"></i>
+      <span style="flex:1">Flow context may be stale — tab changed</span>
+      <button id="refreshContextBtn" style="background:var(--warn);color:#000;border:none;border-radius:4px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;flex-shrink:0">Reload</button>
+    </div>
+
+    <div class="export-row">
+      <button class="primary-btn" id="copyBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy JSON
+      </button>
+      <button class="primary-btn" id="exportJsonBtn">
+        <i class="bi bi-download"></i>
+        Export JSON
+      </button>
+    </div>
+
+    <div class="tools-section-label">Developer Utilities</div>
+    <button class="tool-btn" id="quickBtn">
+      <div class="tool-btn-icon"><i class="bi bi-search"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Quick Copy Action</span>
+        <span class="tool-btn-desc">Search and copy any action by name</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="quickPanel">
+      <div class="search-bar">
+        <i class="bi bi-search search-icon"></i>
+        <input class="search-input" id="quickSearch" placeholder="Search actions…" autocomplete="off" spellcheck="false" />
+        <button class="clear-btn" id="quickClear"><i class="bi bi-x"></i></button>
+      </div>
+      <div class="quick-results" id="quickResults">
+        <div class="quick-hint">Start typing to search actions</div>
+      </div>
+    </div>
+
+    <button class="tool-btn" id="pasteBtn" style="display:none">
+      <div class="tool-btn-icon"><i class="bi bi-clipboard-check"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Paste Actions into Flow</span>
+        <span class="tool-btn-desc">Inject clipboard JSON into the flow</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="pastePanel">
+      <!-- dynamically populated by renderPastePanel() -->
+    </div>
+
+    <button class="tool-btn" id="selectActionsBtn">
+      <div class="tool-btn-icon"><i class="bi bi-ui-checks"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Select Actions to Copy</span>
+        <span class="tool-btn-desc">Multi-select actions for bulk copy</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="pickerPanel">
+      <div class="picker-bar">
+        <input class="picker-search" id="pickerSearch" placeholder="Filter actions…" autocomplete="off" spellcheck="false" />
+        <button class="picker-toggle" id="pickerToggleAll">Select all</button>
+      </div>
+      <div class="picker-hint-bar">Right-click any action to select it and all its dependencies</div>
+      <div class="picker-list" id="pickerList"></div>
+      <div class="picker-foot">
+        <span class="picker-count" id="pickerCount">0 selected</span>
+        <button class="picker-copy-btn" id="copySelectionBtn" disabled>Copy JSON</button>
+      </div>
+    </div>
+
+    <button class="tool-btn" id="connRefBtn">
+      <div class="tool-btn-icon"><i class="bi bi-plug"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Copy Connection Refs</span>
+        <span class="tool-btn-desc">Extract connection reference keys</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+
+    <button class="tool-btn" id="runsBtn">
+      <div class="tool-btn-icon"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Failed Run Errors</span>
+        <span class="tool-btn-desc">View and inspect past run failures</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="runsPanel">
+      <div class="panel-header">
+        <span class="panel-title" id="runsPanelTitle">Recent Runs</span>
+        <button class="back-btn" id="runsBackBtn"><i class="bi bi-arrow-left"></i> back</button>
+      </div>
+      <div class="runs-stats-bar" id="runsStatsBar">
+        <div class="runs-stat-summary">
+          <span class="runs-stat-label" id="runsStatLabel"></span>
+          <span class="runs-stat-avg" id="runsStatAvg"></span>
+        </div>
+        <div class="runs-chart" id="runsChart"></div>
+        <div class="runs-ratio" id="runsRatio"></div>
+      </div>
+      <div id="runsBody" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden"><div class="runs-list" id="runsList"></div></div>
+      <div class="panel-foot" id="runsPanelFooter" style="display:none">
+        <span class="panel-meta" id="runsMeta"></span>
+        <button class="panel-copy-btn" id="runsCopyBtn">Copy errors</button>
+      </div>
+    </div>
+
+    <button class="tool-btn" id="exprBtn">
+      <div class="tool-btn-icon"><i class="bi bi-braces-asterisk"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Expression Inspector</span>
+        <span class="tool-btn-desc">Scan and decode all flow expressions</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="exprPanel">
+      <div class="expr-search-bar">
+        <i class="bi bi-search search-icon"></i>
+        <input class="expr-search-input" id="exprSearch" placeholder="Filter expressions…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="expr-list" id="exprList"></div>
+      <div class="expr-footer">
+        <span class="expr-meta" id="exprMeta"></span>
+        <button class="panel-copy-btn" id="exprCopyAllBtn" style="display:none">Copy all</button>
+      </div>
+    </div>
+
+
+    <button class="tool-btn" id="triggerBtn">
+      <div class="tool-btn-icon"><i class="bi bi-lightning-charge"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Copy Trigger</span>
+        <span class="tool-btn-desc">Copy the trigger configuration</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+
+    <button class="tool-btn" id="varsBtn">
+      <div class="tool-btn-icon"><i class="bi bi-collection"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Variable Tracker</span>
+        <span class="tool-btn-desc">Find and track all flow variables</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="varsPanel">
+      <div class="panel-header">
+        <span class="panel-title">Variables</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="panel-meta" id="varsMeta"></span>
+          <button class="panel-copy-btn" id="varsCopyBtn" style="display:none">Copy all</button>
+        </div>
+      </div>
+      <div class="vars-list" id="varsList"></div>
+    </div>
+
+    <button class="tool-btn" id="lintBtn">
+      <div class="tool-btn-icon"><i class="bi bi-shield-check"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Analyze Flow</span>
+        <span class="tool-btn-desc">Audit flow against best practices</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="lintPanel">
+      <div class="panel-header">
+        <span class="panel-title">Flow Analyzer</span>
+        <span class="panel-meta" id="lintMeta"></span>
+      </div>
+      <div class="lint-list" id="lintList"></div>
+      <div class="lint-footer">
+        <span class="lint-meta" id="lintFooterMeta"></span>
+        <button class="panel-copy-btn" id="lintCopyBtn" style="display:none">Copy report</button>
+      </div>
+    </div>
+
+
+
+  </div>
+
+  <div class="footer">
+    <span class="footer-version" id="footerVersion"></span>
+    <div class="footer-links">
+      <button class="footer-btn footer-btn-kofi" id="kofiBtn" title="Support on Ko-fi">☕ Support</button>
+      <button class="footer-btn" id="feedbackBtn" title="Give feedback or report a bug">💬 Feedback</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon"></div>
+    <div class="toast-body">
+      <div class="toast-title" id="toastTitle"></div>
+      <div class="toast-detail" id="toastDetail"></div>
+    </div>
+    <button id="toastReload" style="display:none;background:var(--success);color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;flex-shrink:0;margin-right:4px;white-space:nowrap">↺ Reload</button>
+    <button class="toast-close" id="toastClose"><i class="bi bi-x"></i></button>
+  </div>
+
+  <script type="module" src="popup/popup.js"></script>
+</body>
+</html>

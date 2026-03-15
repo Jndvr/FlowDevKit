@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — FlowDevKit</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1a1a2e;
+      background: #f8f9fc;
+      padding: 40px 20px 80px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; color: #0f172a; }
+    .meta { font-size: 13px; color: #64748b; margin-bottom: 40px; }
+    h2 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 36px 0 10px; }
+    p { color: #334155; margin-bottom: 12px; }
+    ul { color: #334155; padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 6px; }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 16px;
+    }
+    .card h2 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+    th { text-align: left; padding: 8px 12px; background: #f1f5f9; color: #475569; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+    tr:last-child td { border-bottom: none; }
+    .highlight {
+      background: #eff6ff;
+      border-left: 3px solid #2563eb;
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #1e40af;
+    }
+    footer { margin-top: 60px; font-size: 12px; color: #94a3b8; text-align: center; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="badge">FlowDevKit</div>
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: March 2026 &nbsp;·&nbsp; Author: Jan Düver</p>
+
+    <div class="highlight">
+      <strong>Short version:</strong> FlowDevKit collects no personal data, sends nothing to external servers, and stores only your local UI preferences. Everything runs in your browser.
+    </div>
+
+    <div class="card">
+      <h2>1. What FlowDevKit Does</h2>
+      <p>FlowDevKit is a browser extension for Microsoft Power Automate developers. It reads the flow definition from the Power Automate API using your existing browser session and presents it through a local developer toolbox (copy JSON, inspect expressions, analyze flow quality, view run errors, and more).</p>
+    </div>
+
+    <div class="card">
+      <h2>2. Data We Do Not Collect</h2>
+      <p>FlowDevKit does <strong>not</strong>:</p>
+      <ul>
+        <li>Collect, store, or transmit your flow data to any server</li>
+        <li>Collect personal information (name, email, account details)</li>
+        <li>Track usage, analytics, or telemetry of any kind</li>
+        <li>Store authentication tokens, passwords, or session cookies beyond your local browser session</li>
+        <li>Communicate with any server other than official Microsoft Power Platform APIs</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>3. What Stays on Your Device</h2>
+      <p>The only data FlowDevKit stores locally (via <code>chrome.storage.local</code>) is your UI preferences:</p>
+      <ul>
+        <li>Selected API region (e.g. EMEA, US)</li>
+        <li>Export format preference (Definition only / Full export)</li>
+        <li>Color theme (light / dark)</li>
+        <li>Custom API host (if entered)</li>
+      </ul>
+      <p>These preferences never leave your device and can be cleared at any time by removing the extension.</p>
+    </div>
+
+    <div class="card">
+      <h2>4. Permissions Explained</h2>
+      <table>
+        <thead>
+          <tr><th>Permission</th><th>Why it's needed</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>activeTab</code></td>
+            <td>Reads the URL of your current tab to extract the environment ID and flow ID required to call the Power Automate API.</td>
+          </tr>
+          <tr>
+            <td><code>tabs</code></td>
+            <td>Scans tab frames to locate the correct Power Automate frame URL, since the designer loads inside an iframe.</td>
+          </tr>
+          <tr>
+            <td><code>scripting</code></td>
+            <td>Executes API fetch calls in the Power Automate tab context so requests carry your existing session authentication.</td>
+          </tr>
+          <tr>
+            <td><code>clipboardWrite</code></td>
+            <td>Copies flow JSON or selected actions to your clipboard when you click Copy.</td>
+          </tr>
+          <tr>
+            <td><code>clipboardRead</code></td>
+            <td>Reads clipboard content when you use the Paste Actions feature to inject previously copied actions into a flow.</td>
+          </tr>
+          <tr>
+            <td><code>cookies</code></td>
+            <td>Reads your Power Automate session cookie to authenticate API calls made from the background service worker. No cookie data is stored or transmitted outside your browser.</td>
+          </tr>
+          <tr>
+            <td><code>webNavigation</code></td>
+            <td>Detects tab navigation so the extension can refresh its flow context and warn you when the context may be stale.</td>
+          </tr>
+          <tr>
+            <td><code>sidePanel</code></td>
+            <td>Enables the extension to open as a docked side panel alongside the Power Automate designer.</td>
+          </tr>
+          <tr>
+            <td><code>storage</code></td>
+            <td>Saves your UI preferences (region, format, theme) locally so they persist across sessions.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>5. Third-Party Services</h2>
+      <p>FlowDevKit only communicates with official Microsoft Power Platform endpoints:</p>
+      <ul>
+        <li><code>*.api.flow.microsoft.com</code> — Power Automate REST API</li>
+        <li><code>make.powerautomate.com</code> / <code>make.powerapps.com</code> — Maker portal</li>
+        <li><code>*.environment.api.powerplatform.com</code> — Power Platform environment API</li>
+        <li><code>login.microsoftonline.com</code> — Microsoft authentication</li>
+        <li><code>api.bap.microsoft.com</code> — Business Application Platform API</li>
+      </ul>
+      <p>No data is sent to the extension author or any other third party.</p>
+    </div>
+
+    <div class="card">
+      <h2>7. Changes to This Policy</h2>
+      <p>If this policy is updated, the "Last updated" date at the top of this page will change. Significant changes will also be noted in the extension's release notes on GitHub.</p>
+    </div>
+
+    <div class="card">
+      <h2>8. Contact</h2>
+      <p>Questions about this privacy policy? Reach out via the feedback form in the extension or open an issue on GitHub.</p>
+      <p>
+        <a href="https://tally.so/r/yPD40B" target="_blank" rel="noopener">Submit feedback</a> &nbsp;·&nbsp;
+        <a href="https://github.com/Jndvr/FlowDevKit/issues" target="_blank" rel="noopener">GitHub Issues</a>
+      </p>
+    </div>
+
+    <footer>
+      &copy; 2026 Jan Düver · FlowDevKit. All rights reserved.
+    </footer>
+
+  </div>
+</body>
+</html>

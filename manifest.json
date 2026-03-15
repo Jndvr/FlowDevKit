@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "FlowDevKit",
+  "version": "1.0.0",
+  "description": "Inspect, copy, and debug Power Automate flows directly from your browser.",
+  "author": "Jan Düver",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "FlowDevKit (Alt+Shift+F)"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+F",
+        "windows": "Alt+Shift+F",
+        "mac": "Alt+Shift+F"
+      },
+      "description": "Open FlowDevKit"
+    }
+  },
+  "background": {
+    "service_worker": "background/background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "clipboardWrite",
+    "clipboardRead",
+    "cookies",
+    "webNavigation",
+    "sidePanel",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://make.powerautomate.com/*",
+    "https://make.powerapps.com/*",
+    "https://make.preview.powerapps.com/*",
+    "https://api.powerapps.com/*",
+    "https://copilotstudio.microsoft.com/*",
+    "https://copilotstudio.preview.microsoft.com/*",
+    "https://*.api.flow.microsoft.com/*",
+    "https://*.environment.api.powerplatform.com/*",
+    "https://api.powerplatform.com/*",
+    "https://login.microsoftonline.com/*",
+    "https://api.bap.microsoft.com/*"
+  ]
+}
