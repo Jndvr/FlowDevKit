@@ -248,4 +248,4 @@ Have a bug, feature request, or idea? Submit it here:
 
 ## License
 
-MIT © Jan Düver — see [LICENSE](LICENSE) for details.
+Source-available — free to use, not licensed for redistribution or use in competing products. See [LICENSE](LICENSE) for full terms. For redistribution or partnership enquiries contact [github.com/Jndvr](https://github.com/Jndvr).
