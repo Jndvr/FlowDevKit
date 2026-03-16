@@ -248,4 +248,4 @@ Have a bug, feature request, or idea? Submit it here:
 
 ## License
 
-© Jan Düver. All rights reserved. Free to use; not licensed for redistribution or modification.
+MIT © Jan Düver — see [LICENSE](LICENSE) for details.
