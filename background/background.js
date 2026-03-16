@@ -27,7 +27,6 @@ function cacheFlowFromUrl(tabId, url) {
   const envMatch = url.match(ENV_RE_BG);
   if (flowMatch && envMatch) {
     flowNavCache[tabId] = { environmentId: envMatch[1], flowId: flowMatch[1] };
-    console.log("[FlowKit bg] Cached flow from SPA nav:", flowNavCache[tabId]);
   }
 }
 
