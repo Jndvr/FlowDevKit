@@ -42,7 +42,6 @@
     "tabs",
     "scripting",
     "clipboardWrite",
-    "clipboardRead",
     "cookies",
     "webNavigation",
     "sidePanel",

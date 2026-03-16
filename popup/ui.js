@@ -109,7 +109,10 @@ export function applyTheme(t) {
 }
 
 // ── Flow strip ─────────────────────────────────────────────────────────────────
-const envNameCache = {};
+// envNameCache stores { name, ts } per environment ID.
+// Entries expire after ENV_NAME_TTL_MS so renamed environments are picked up on next open.
+const ENV_NAME_TTL_MS = 60 * 60 * 1000; // 1 hour
+const envNameCache = {}; // { [envId]: { name: string, ts: number } }
 let _loadedFlowId = null;
 
 export function setLoadedFlow(flowId) {
@@ -124,6 +127,15 @@ export function showContextBanner(visible) {
   if (contextBanner) contextBanner.style.display = visible ? "flex" : "none";
 }
 
+// Shows/hides the "Refreshing…" indicator in the flow strip.
+// While refreshing: dot pulses amber. On completion: dot returns to green, status text clears.
+export function setFlowStripRefreshing(refreshing) {
+  const dot    = document.getElementById("flowStripDot");
+  const status = document.getElementById("flowStripStatus");
+  if (dot)    dot.classList.toggle("flow-strip-dot--refreshing", refreshing);
+  if (status) status.textContent = refreshing ? "Refreshing…" : "";
+}
+
 export function updateFlowStrip(displayName, url, environmentId) {
   if (!displayName) return;
   const flowStrip     = document.getElementById("flowStrip");
@@ -135,7 +147,8 @@ export function updateFlowStrip(displayName, url, environmentId) {
   const envMatch = url ? url.match(/environments\/([^/?#]+)/) : null;
   const envId = environmentId || (envMatch ? envMatch[1] : null);
   if (envId) {
-    const cachedName = envNameCache[envId];
+    const entry = envNameCache[envId];
+    const cachedName = (entry && Date.now() - entry.ts < ENV_NAME_TTL_MS) ? entry.name : null;
     flowStripEnv.textContent = cachedName || envId.slice(-8);
     flowStripEnv.title = cachedName ? `${cachedName}\n${envId}` : envId;
   } else {
@@ -148,11 +161,14 @@ export function updateFlowStrip(displayName, url, environmentId) {
 }
 
 export async function fetchAndCacheEnvName(environmentId, tokens) {
-  if (!environmentId || envNameCache[environmentId]) return;
+  if (!environmentId) return;
+  // Skip fetch if we have a fresh cache entry (not yet expired).
+  const existing = envNameCache[environmentId];
+  if (existing && Date.now() - existing.ts < ENV_NAME_TTL_MS) return;
   try {
     const r = await chrome.runtime.sendMessage({ type: "FETCH_ENV", environmentId, tokens });
     if (r?.name) {
-      envNameCache[environmentId] = r.name;
+      envNameCache[environmentId] = { name: r.name, ts: Date.now() };
       const flowStripEnv = document.getElementById("flowStripEnv");
       if (flowStripEnv?.title?.includes(environmentId)) {
         flowStripEnv.textContent = r.name;

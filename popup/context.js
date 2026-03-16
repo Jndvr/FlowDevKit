@@ -13,7 +13,15 @@ export function setLastPaTabId(id) { lastPaTabId = id; }
 export function getApiHost() {
   const customHost = document.getElementById("customHost");
   const custom = customHost?.value.trim();
-  if (custom) return custom.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  if (custom) {
+    const stripped = custom.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    // Validate: must be a well-formed hostname (letters, digits, dots, hyphens only).
+    // Rejects javascript: URIs, path-only strings, and other non-hostname input.
+    if (/^[a-z0-9]([a-z0-9.\-]*[a-z0-9])?$/i.test(stripped) && stripped.includes(".")) {
+      return stripped;
+    }
+    console.warn("[FlowKit] Custom host is not a valid hostname, ignoring:", custom);
+  }
   return REGION_HOSTS[getRegion()] || REGION_HOSTS.emea;
 }
 
@@ -271,7 +279,10 @@ export function installPostMessageSpy() {
   if (window.__flowkitListening) return;
   window.__flowkitListening = true;
   const FLOW_PATH_RE = /\/flows\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+  // Only accept messages from trusted Microsoft Power Platform origins.
+  const ALLOWED_ORIGIN_RE = /^https:\/\/([a-z0-9-]+\.)*(powerautomate|powerapps|microsoft)\.com$/i;
   window.addEventListener("message", (evt) => {
+    if (!evt.origin || !ALLOWED_ORIGIN_RE.test(evt.origin)) return;
     try {
       const raw = typeof evt.data === "string" ? evt.data : JSON.stringify(evt.data);
       if (!raw || !raw.toLowerCase().includes("flow")) return;

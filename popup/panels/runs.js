@@ -104,7 +104,73 @@ function renderRunStats(runs) {
     item.innerHTML = `<span class="runs-ratio-dot" style="background:${dotColors[key]}"></span>${val} ${key}`;
     runsRatio.appendChild(item);
   }
+  // Remove any previous sparkline before appending a new one
+  runsStatsBar.querySelector(".runs-sparkline")?.remove();
+  const sparkline = renderSparkline(runs);
+  if (sparkline) runsStatsBar.appendChild(sparkline);
+
   runsStatsBar.classList.add("show");
+}
+
+// ── Duration sparkline ────────────────────────────────────────────────────────
+function renderSparkline(runs) {
+  // Build ordered (oldest→newest) duration array; null for runs without times
+  const ordered = [...runs].reverse();
+  const durations = ordered.map(run => {
+    const { startTime, endTime } = run.properties || {};
+    if (!startTime || !endTime) return null;
+    const ms = new Date(endTime) - new Date(startTime);
+    return ms > 0 ? ms : null;
+  });
+
+  const valid = durations.filter(d => d !== null);
+  if (valid.length < 3) return null;   // too few points for a meaningful line
+
+  const min   = Math.min(...valid);
+  const range = Math.max(...valid) - min || 1;
+  const W = 200, H = 22;
+
+  const points = durations
+    .map((d, i) => d === null ? null : `${((i / (durations.length - 1)) * W).toFixed(1)},${(H - ((d - min) / range) * H).toFixed(1)}`)
+    .filter(Boolean);
+
+  // Trend: compare first-half vs second-half average
+  const half       = Math.floor(valid.length / 2);
+  const firstAvg   = valid.slice(0, half).reduce((a, b) => a + b, 0) / half;
+  const secondAvg  = valid.slice(half).reduce((a, b) => a + b, 0) / (valid.length - half);
+  const trendColor = secondAvg > firstAvg * 1.1 ? "var(--error)"
+                   : secondAvg < firstAvg * 0.9 ? "var(--success)"
+                   : "var(--text-3)";
+  const trendLabel = secondAvg > firstAvg * 1.1 ? "↑ Trending slower"
+                   : secondAvg < firstAvg * 0.9 ? "↓ Trending faster"
+                   : "→ Stable";
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.style.cssText = `width:100%;height:${H}px;display:block;overflow:visible`;
+
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  poly.setAttribute("points", points.join(" "));
+  poly.setAttribute("fill", "none");
+  poly.setAttribute("stroke", trendColor);
+  poly.setAttribute("stroke-width", "1.5");
+  poly.setAttribute("stroke-linejoin", "round");
+  poly.setAttribute("stroke-linecap", "round");
+  svg.appendChild(poly);
+
+  const wrap = document.createElement("div");
+  wrap.className = "runs-sparkline";
+  wrap.title = trendLabel;
+
+  const label = document.createElement("div");
+  label.className = "runs-sparkline-label";
+  label.textContent = trendLabel;
+  label.style.color = trendColor;
+
+  wrap.appendChild(svg);
+  wrap.appendChild(label);
+  return wrap;
 }
 
 // ── Runs list ─────────────────────────────────────────────────────────────────

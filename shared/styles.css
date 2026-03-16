@@ -112,6 +112,14 @@ body.sidepanel {
 }
 .settings-input::placeholder { color: var(--text-3); }
 .settings-input:focus { border-color: var(--accent); }
+.settings-row--debug { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+.settings-debug-btn {
+  flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text-2); font-size: 11px; padding: 5px 10px; cursor: pointer; text-align: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.settings-debug-btn:hover { border-color: var(--accent); color: var(--accent); }
+.settings-debug-btn.copied { border-color: var(--success); color: var(--success); }
 .mode-seg { display: flex; gap: 3px; flex: 1; }
 .mode-seg-btn {
   flex: 1; padding: 5px 6px; font-size: 11px; font-weight: 500;
@@ -361,9 +369,12 @@ body.sidepanel {
 .flow-strip-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .flow-strip-name { font-size: 11.5px; font-weight: 600; color: var(--text); font-family: ui-monospace, "Cascadia Code", Consolas, "Courier New", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flow-strip-env-row { display: flex; align-items: center; gap: 5px; }
-.flow-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+.flow-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; transition: background 0.3s; }
+.flow-strip-dot--refreshing { background: var(--warn); animation: dotPulse 1s ease-in-out infinite; }
+@keyframes dotPulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
 .flow-strip-env { font-size: 10px; color: var(--text-2); }
 .flow-strip-env::before { content: "Environment: "; color: var(--text-3); }
+.flow-strip-status { font-size: 10px; color: var(--text-3); margin-left: 2px; }
 
 /* Variable tracker panel */
 .vars-list { max-height:380px; overflow-y:auto; }
@@ -496,6 +507,124 @@ body.sidepanel {
 .lint-list { flex:1; overflow-y:auto; }
 .lint-list::-webkit-scrollbar { width:3px; }
 .lint-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* Definition health bar */
+.health-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; padding:8px 10px 6px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.health-gauge { display:flex; flex-direction:column; gap:3px; }
+.health-gauge-row { display:flex; align-items:baseline; justify-content:space-between; }
+.health-gauge-label { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-3); }
+.health-gauge-value { font-size:10px; font-weight:700; font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; }
+.health-gauge-value.ok    { color:var(--success); }
+.health-gauge-value.warn  { color:var(--warn); }
+.health-gauge-value.error { color:var(--error); }
+.health-gauge-max { font-size:8px; font-weight:400; color:var(--text-3); }
+.health-gauge-track { height:3px; background:var(--surface-3); border-radius:2px; overflow:hidden; }
+.health-gauge-fill { height:100%; border-radius:2px; transition:width 0.3s ease; }
+.health-gauge-fill.ok    { background:var(--success); }
+.health-gauge-fill.warn  { background:var(--warn); }
+.health-gauge-fill.error { background:var(--error); }
+
+/* Run duration sparkline */
+.runs-sparkline { margin-top:6px; padding-top:4px; border-top:1px solid var(--border-soft); }
+.runs-sparkline-label { font-size:9px; font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; margin-top:2px; text-align:right; }
+
+/* Child flow navigator */
+.child-flow-list { max-height:320px; overflow-y:auto; }
+.child-flow-list::-webkit-scrollbar { width:3px; }
+.child-flow-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.child-flow-empty { padding:14px; text-align:center; font-size:11px; color:var(--text-3); font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; }
+.child-flow-row { display:flex; align-items:center; gap:8px; padding:7px 10px; border-top:1px solid var(--border-soft); }
+.child-flow-row:first-child { border-top:none; }
+.child-flow-row:hover { background:var(--surface-2); }
+.child-flow-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.child-flow-action { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:10.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.child-flow-meta { font-size:9.5px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.child-flow-kind { background:var(--accent-dim); color:var(--accent); font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+.child-flow-id { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:9px; color:var(--text-3); }
+.child-flow-open-btn { flex-shrink:0; background:var(--surface-2); border:1px solid var(--border); border-radius:4px; color:var(--text-2); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; font-size:10px; font-weight:600; padding:3px 9px; cursor:pointer; transition:all 0.15s; }
+.child-flow-open-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+.child-flow-open-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+/* Flow diff side-by-side overlay */
+.diff-overlay { display:none; position:fixed; inset:0; z-index:300; flex-direction:column; background:var(--bg); }
+.diff-overlay.show { display:flex; animation:fadeIn 0.15s ease; }
+.diff-overlay-header { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+.diff-overlay-title { font-size:11px; font-weight:700; color:var(--text); flex-shrink:0; }
+.diff-legend { display:flex; gap:5px; flex:1; flex-wrap:wrap; }
+.diff-legend-item { font-size:9px; font-weight:700; font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; padding:1px 5px; border-radius:3px; }
+.diff-legend-item.added   { background:rgba(52,211,153,0.12);  color:var(--success); }
+.diff-legend-item.removed { background:rgba(248,113,113,0.12); color:var(--error); }
+.diff-legend-item.changed { background:rgba(251,191,36,0.12);  color:var(--warn); }
+.diff-overlay-close { background:none; border:none; color:var(--text-3); cursor:pointer; font-size:14px; padding:3px 5px; border-radius:3px; transition:all 0.12s; flex-shrink:0; line-height:1; }
+.diff-overlay-close:hover { color:var(--text); background:var(--surface-2); }
+.diff-sbs-content { flex:1; overflow-y:auto; overflow-x:hidden; }
+.diff-sbs-content::-webkit-scrollbar { width:3px; }
+.diff-sbs-content::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+/* Column headers — sticky */
+.sbs-col-headers { display:grid; grid-template-columns:1fr 1fr; background:var(--surface-2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2; }
+.sbs-col-head { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-3); padding:5px 8px; }
+.sbs-col-head:first-child { border-right:1px solid var(--border); }
+/* Section headers */
+.sbs-section { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:5px 8px 4px; border-top:1px solid var(--border); }
+.sbs-section.changed   { background:rgba(251,191,36,0.05);  color:var(--warn); }
+.sbs-section.added     { background:rgba(52,211,153,0.05);  color:var(--success); }
+.sbs-section.removed   { background:rgba(248,113,113,0.05); color:var(--error); }
+.sbs-section.unchanged { background:var(--surface); color:var(--text-3); }
+/* Action header */
+.sbs-action-header { display:flex; align-items:center; gap:8px; padding:4px 8px; background:var(--surface-2); border-top:1px solid var(--border); }
+.sbs-action-header.changed { border-left:2px solid var(--warn); }
+.sbs-action-header.added   { border-left:2px solid var(--success); }
+.sbs-action-header.removed { border-left:2px solid var(--error); }
+.sbs-action-name { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:10px; font-weight:600; color:var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sbs-action-type { font-size:9px; color:var(--text-3); font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; flex-shrink:0; }
+/* Two-column diff rows */
+.sbs-row { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid var(--border-soft); }
+.sbs-col { overflow-x:auto; min-width:0; }
+.sbs-col:first-child { border-right:1px solid var(--border); }
+.sbs-col::-webkit-scrollbar { height:2px; }
+.sbs-col::-webkit-scrollbar-thumb { background:var(--border); }
+/* Diff lines */
+.sbs-line-ctx   { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:8.5px; line-height:1.55; padding:0 6px; white-space:pre; color:var(--text-2); }
+.sbs-line-add   { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:8.5px; line-height:1.55; padding:0 6px; white-space:pre; background:rgba(52,211,153,0.1);  color:var(--success); }
+.sbs-line-rem   { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:8.5px; line-height:1.55; padding:0 6px; white-space:pre; background:rgba(248,113,113,0.1); color:var(--error); }
+.sbs-line-empty { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:8.5px; line-height:1.55; padding:0 6px; white-space:pre; background:rgba(0,0,0,0.06); color:transparent; }
+[data-theme="light"] .sbs-line-empty { background:rgba(0,0,0,0.04); }
+
+/* Flow diff panel */
+.diff-input-wrap { padding:8px 10px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+.diff-textarea { width:100%; height:80px; background:var(--surface-2); border:1px solid var(--border); border-radius:5px; color:var(--text); font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:9.5px; padding:6px 8px; outline:none; resize:none; line-height:1.45; transition:border-color 0.15s; }
+.diff-textarea::placeholder { color:var(--text-3); }
+.diff-textarea:focus { border-color:var(--accent); }
+.diff-run-btn { width:100%; background:var(--accent); border:none; border-radius:5px; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; font-size:11.5px; font-weight:600; padding:6px 12px; cursor:pointer; transition:filter 0.15s; }
+.diff-run-btn:hover:not(:disabled) { filter:brightness(1.1); }
+.diff-run-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.diff-result { max-height:280px; overflow-y:auto; }
+.diff-result::-webkit-scrollbar { width:3px; }
+.diff-result::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.diff-loading { padding:12px; text-align:center; font-size:10.5px; color:var(--text-3); display:flex; flex-direction:column; align-items:center; gap:4px; }
+.diff-summary { display:flex; align-items:center; gap:5px; padding:6px 10px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.diff-sbs-btn { margin-left:auto; flex-shrink:0; background:var(--surface-2); border:1px solid var(--border); border-radius:4px; color:var(--text-2); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; font-size:10px; font-weight:600; padding:2px 8px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s; white-space:nowrap; }
+.diff-sbs-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+.diff-sbs-btn i { font-size:11px; }
+.diff-chip { font-size:9px; font-weight:700; font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; padding:2px 6px; border-radius:3px; }
+.diff-chip.added     { background:rgba(52,211,153,0.12);  color:var(--success); }
+.diff-chip.removed   { background:rgba(248,113,113,0.12); color:var(--error); }
+.diff-chip.changed   { background:rgba(251,191,36,0.12);  color:var(--warn); }
+.diff-chip.unchanged { background:var(--surface-3);        color:var(--text-3); }
+.diff-empty { padding:12px 10px; font-size:10.5px; color:var(--success); text-align:center; }
+.diff-group-header { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:5px 10px 3px; border-top:1px solid var(--border); }
+.diff-group-header.added   { color:var(--success); background:rgba(52,211,153,0.05); }
+.diff-group-header.removed { color:var(--error);   background:rgba(248,113,113,0.05); }
+.diff-group-header.changed { color:var(--warn);    background:rgba(251,191,36,0.05); }
+.diff-row { display:flex; align-items:center; gap:7px; padding:4px 10px; border-top:1px solid var(--border-soft); }
+.diff-row:hover { background:var(--surface-2); }
+.diff-marker { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:11px; font-weight:700; flex-shrink:0; width:10px; }
+.diff-row.added   .diff-marker { color:var(--success); }
+.diff-row.removed .diff-marker { color:var(--error); }
+.diff-row.changed .diff-marker { color:var(--warn); }
+.diff-action-name { font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; font-size:10.5px; color:var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.diff-action-type { font-size:9px; color:var(--text-3); font-family:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace; flex-shrink:0; }
+
 /* Flow Metrics */
 .metrics-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; padding:8px 10px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .metric-card { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:7px 6px 6px; text-align:center; cursor:default; transition:border-color 0.12s; }

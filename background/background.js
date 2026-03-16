@@ -11,6 +11,7 @@ import {
   handleFetchRunIO,
   handleFetchConnections,
 } from "./api-handlers.js";
+import { getLog } from "./debug-log.js";
 
 // ── Side panel: open on toolbar icon click ────────────────────────────────────
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => { });
@@ -58,6 +59,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .catch(e => sendResponse({ ok: false, error: e.message }));
     return true;
   }
+  if (message.type === "GET_DEBUG_LOG")   { sendResponse({ log: getLog() }); return false; }
   if (message.type === "FETCH_FLOW_LIST") { handleFetchFlowList(message, sendResponse); return true; }
   if (message.type === "FETCH_FLOW")     { handleFetchFlow(message, sendResponse);     return true; }
   if (message.type === "FETCH_ENV")      { handleFetchEnv(message, sendResponse);      return true; }
@@ -66,5 +68,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "FETCH_RUNS")     { handleFetchRuns(message, sendResponse);     return true; }
   if (message.type === "FETCH_RUN_DETAIL") { handleFetchRunDetail(message, sendResponse); return true; }
   if (message.type === "FETCH_RUN_IO")   { handleFetchRunIO(message, sendResponse);   return true; }
+  if (message.type === "OPEN_DIFF_VIEW") {
+    chrome.storage.local.set({ diffViewData: message.diffData }, () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL("diff-view.html"), active: true },
+        () => sendResponse({ ok: true }));
+    });
+    return true;
+  }
   return false;
 });

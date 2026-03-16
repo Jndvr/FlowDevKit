@@ -11,17 +11,18 @@
   <div class="header">
     <div class="header-logo"><img src="icons/icon128.png" alt="FlowDevKit"></div>
     <span class="header-title">FlowDevKit</span>
-    <button class="icon-btn active" id="undockBtn" title="Close side panel" style="display:none"><i class="bi bi-layout-sidebar-reverse"></i></button>
-    <button class="icon-btn" id="themeToggle" title="Toggle theme"><i class="bi bi-sun"></i></button>
-    <button class="icon-btn" id="settingsBtn" title="Settings"><i class="bi bi-gear"></i></button>
+    <button class="icon-btn active" id="undockBtn" title="Close side panel" aria-label="Close side panel" style="display:none"><i class="bi bi-layout-sidebar-reverse" aria-hidden="true"></i></button>
+    <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"><i class="bi bi-sun" aria-hidden="true"></i></button>
+    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings"><i class="bi bi-gear" aria-hidden="true"></i></button>
   </div>
   <div class="flow-strip" id="flowStrip" style="display:none">
     <div class="flow-strip-icon-box"><i class="bi bi-lightning-charge"></i></div>
     <div class="flow-strip-info">
       <span class="flow-strip-name" id="flowStripName"></span>
       <div class="flow-strip-env-row">
-        <span class="flow-strip-dot"></span>
+        <span class="flow-strip-dot" id="flowStripDot"></span>
         <span class="flow-strip-env" id="flowStripEnv"></span>
+        <span class="flow-strip-status" id="flowStripStatus" aria-live="polite"></span>
       </div>
     </div>
   </div>
@@ -40,7 +41,7 @@
     </div>
     <div class="settings-row">
       <span class="settings-label">Custom host</span>
-      <input class="settings-input" id="customHost" placeholder="e.g. gov.api.flow.microsoft.com" autocomplete="off" spellcheck="false" />
+      <input class="settings-input" id="customHost" placeholder="e.g. gov.api.flow.microsoft.com" autocomplete="off" spellcheck="false" aria-label="Custom API host" />
     </div>
     <div class="settings-row">
       <span class="settings-label">Format</span>
@@ -48,6 +49,10 @@
         <button class="mode-seg-btn" id="modeDefinition" data-mode="definition">Definition only<small>triggers + actions</small></button>
         <button class="mode-seg-btn active" id="modeFull" data-mode="full">Full export<small>+ connectionRefs</small></button>
       </div>
+    </div>
+    <div class="settings-row settings-row--debug">
+      <span class="settings-label">Debug</span>
+      <button class="settings-debug-btn" id="debugCopyBtn" title="Copy recent API calls, status codes, and timing to clipboard">Copy debug log</button>
     </div>
   </div>
 
@@ -93,8 +98,8 @@
     <div class="panel" id="quickPanel">
       <div class="search-bar">
         <i class="bi bi-search search-icon"></i>
-        <input class="search-input" id="quickSearch" placeholder="Search actions…" autocomplete="off" spellcheck="false" />
-        <button class="clear-btn" id="quickClear"><i class="bi bi-x"></i></button>
+        <input class="search-input" id="quickSearch" placeholder="Search actions…" autocomplete="off" spellcheck="false" aria-label="Search actions" />
+        <button class="clear-btn" id="quickClear" aria-label="Clear search"><i class="bi bi-x" aria-hidden="true"></i></button>
       </div>
       <div class="quick-results" id="quickResults">
         <div class="quick-hint">Start typing to search actions</div>
@@ -123,7 +128,7 @@
     </button>
     <div class="panel" id="pickerPanel">
       <div class="picker-bar">
-        <input class="picker-search" id="pickerSearch" placeholder="Filter actions…" autocomplete="off" spellcheck="false" />
+        <input class="picker-search" id="pickerSearch" placeholder="Filter actions…" autocomplete="off" spellcheck="false" aria-label="Filter actions" />
         <button class="picker-toggle" id="pickerToggleAll">Select all</button>
       </div>
       <div class="picker-hint-bar">Right-click any action to select it and all its dependencies</div>
@@ -182,7 +187,7 @@
     <div class="panel" id="exprPanel">
       <div class="expr-search-bar">
         <i class="bi bi-search search-icon"></i>
-        <input class="expr-search-input" id="exprSearch" placeholder="Filter expressions…" autocomplete="off" spellcheck="false" />
+        <input class="expr-search-input" id="exprSearch" placeholder="Filter expressions…" autocomplete="off" spellcheck="false" aria-label="Filter expressions" />
       </div>
       <div class="expr-list" id="exprList"></div>
       <div class="expr-footer">
@@ -240,7 +245,33 @@
       </div>
     </div>
 
+    <button class="tool-btn" id="childFlowBtn">
+      <div class="tool-btn-icon"><i class="bi bi-diagram-3"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Child Flows</span>
+        <span class="tool-btn-desc">Navigate to called child flows</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="childFlowPanel">
+      <div class="child-flow-list" id="childFlowList"></div>
+    </div>
 
+    <button class="tool-btn" id="diffBtn">
+      <div class="tool-btn-icon"><i class="bi bi-git"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Flow Diff</span>
+        <span class="tool-btn-desc">Compare flow versions by pasting JSON</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="diffPanel">
+      <div class="diff-input-wrap">
+        <textarea id="diffInput" class="diff-textarea" placeholder="Paste previous flow JSON here (full export or definition only)…" spellcheck="false"></textarea>
+        <button class="diff-run-btn" id="diffRunBtn">Compare with live flow</button>
+      </div>
+      <div class="diff-result" id="diffResult"></div>
+    </div>
 
   </div>
 
@@ -252,14 +283,28 @@
     </div>
   </div>
 
-  <div class="toast" id="toast">
-    <div class="toast-icon" id="toastIcon"></div>
+  <!-- Flow diff side-by-side overlay -->
+  <div class="diff-overlay" id="diffOverlay">
+    <div class="diff-overlay-header">
+      <span class="diff-overlay-title">Side-by-side comparison</span>
+      <div class="diff-legend">
+        <span class="diff-legend-item added">+ Added</span>
+        <span class="diff-legend-item removed">− Removed</span>
+        <span class="diff-legend-item changed">~ Changed</span>
+      </div>
+      <button class="diff-overlay-close" id="diffOverlayClose" title="Close (Esc)">✕</button>
+    </div>
+    <div class="diff-sbs-content" id="diffSbsContent"></div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <div class="toast-icon" id="toastIcon" aria-hidden="true"></div>
     <div class="toast-body">
       <div class="toast-title" id="toastTitle"></div>
       <div class="toast-detail" id="toastDetail"></div>
     </div>
-    <button id="toastReload" style="display:none;background:var(--success);color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;flex-shrink:0;margin-right:4px;white-space:nowrap">↺ Reload</button>
-    <button class="toast-close" id="toastClose"><i class="bi bi-x"></i></button>
+    <button id="toastReload" style="display:none;background:var(--success);color:#fff;border:none;border-radius:4px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;flex-shrink:0;margin-right:4px;white-space:nowrap" aria-label="Reload tab">↺ Reload</button>
+    <button class="toast-close" id="toastClose" aria-label="Dismiss notification"><i class="bi bi-x" aria-hidden="true"></i></button>
   </div>
 
   <script type="module" src="popup/popup.js"></script>

@@ -11,6 +11,8 @@ import "./panels/runs.js";
 import "./panels/variables.js";
 import "./panels/expressions.js";
 import "./panels/lint.js";
+import "./panels/child-flow-nav.js";
+import "./panels/flow-diff.js";
 
 // Panels that export helpers needed below
 import { invalidatePickerCache } from "./panels/picker.js";
@@ -23,7 +25,7 @@ import { resolveFlowContext, buildApiUrl, setLastPaTabId } from "./context.js";
 import {
   closeAllPanels, showStatus, hideStatus, applyTheme,
   updateFlowStrip, fetchAndCacheEnvName, flashBtnSuccess,
-  getActivePanelBtn, getLoadedFlowId, showContextBanner,
+  getActivePanelBtn, getLoadedFlowId, showContextBanner, setFlowStripRefreshing,
 } from "./ui.js";
 import { initPrefs, getRegion, setRegion, getMode, setMode, getTheme, setTheme } from "./prefs.js";
 
@@ -47,6 +49,7 @@ const footerVersion     = document.getElementById("footerVersion");
 const refreshContextBtn = document.getElementById("refreshContextBtn");
 const pastePanel        = document.getElementById("pastePanel");
 const pasteBtn          = document.getElementById("pasteBtn");
+const debugCopyBtn      = document.getElementById("debugCopyBtn");
 
 // ── Button HTML constants ─────────────────────────────────────────────────────
 const COPY_BTN_HTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0">
@@ -136,6 +139,38 @@ kofiBtn?.addEventListener("click", () => {
 });
 feedbackBtn?.addEventListener("click", () => {
   chrome.tabs.create({ url: "https://tally.so/r/yPD40B" });
+});
+
+// ── Debug log copy ────────────────────────────────────────────────────────────
+debugCopyBtn?.addEventListener("click", async () => {
+  const { log = [] } = await chrome.runtime.sendMessage({ type: "GET_DEBUG_LOG" }) ?? {};
+  const manifest = chrome.runtime.getManifest();
+  const customHostEl = document.getElementById("customHost");
+
+  const header = [
+    `FlowDevKit v${manifest.version}`,
+    `Region: ${getRegion()}  Mode: ${getMode()}  Theme: ${getTheme()}`,
+    customHostEl?.value.trim() ? `Custom host: ${customHostEl.value.trim()}` : null,
+    `Logged at: ${new Date().toISOString()}`,
+    "─".repeat(60),
+  ].filter(Boolean).join("\n");
+
+  const lines = log.length
+    ? log.map(e => {
+        const note = e.note ? ` [${e.note}]` : "";
+        const ok   = e.status >= 200 && e.status < 300 ? "✓" : "✗";
+        return `${ok} [${e.ts}] ${e.op.padEnd(12)} HTTP ${e.status}  ${e.ms}ms  scope:${e.scope}  ${e.url}${note}`;
+      }).join("\n")
+    : "(no API calls recorded yet — perform an action first)";
+
+  await navigator.clipboard.writeText(`${header}\n${lines}`);
+
+  debugCopyBtn.textContent = "✓ Copied!";
+  debugCopyBtn.classList.add("copied");
+  setTimeout(() => {
+    debugCopyBtn.textContent = "Copy debug log";
+    debugCopyBtn.classList.remove("copied");
+  }, 1800);
 });
 
 // ── Refresh context banner ────────────────────────────────────────────────────
@@ -342,6 +377,7 @@ async function loadFlowContext({ invalidateCaches = false } = {}) {
     invalidateQuickCache();
     invalidatePickerCache();
   }
+  setFlowStripRefreshing(true);
   try {
     const ctx = await resolveFlowContext();
     const { apiUrl, ppApiUrl, previewApiUrl } = buildApiUrl(ctx.flowId, ctx.environmentId);
@@ -358,6 +394,8 @@ async function loadFlowContext({ invalidateCaches = false } = {}) {
   } catch {
     const flowStrip = document.getElementById("flowStrip");
     if (flowStrip) flowStrip.style.display = "none";
+  } finally {
+    setFlowStripRefreshing(false);
   }
 }
 
@@ -379,25 +417,31 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 // ── Tab activation listener (user switches tabs) ──────────────────────────────
-chrome.tabs.onActivated?.addListener(async (activeInfo) => {
-  try {
-    const tab = await chrome.tabs.get(activeInfo.tabId);
-    const isWeb = tab?.url?.startsWith("http://") || tab?.url?.startsWith("https://");
-    if (!isWeb) return;
-    setLastPaTabId(activeInfo.tabId);
-  } catch { return; }
+// Debounced to 300 ms — rapid tab switching would otherwise fire many
+// concurrent context-resolution + API requests.
+let _tabActivateTimer = null;
+chrome.tabs.onActivated?.addListener((activeInfo) => {
+  clearTimeout(_tabActivateTimer);
+  _tabActivateTimer = setTimeout(async () => {
+    try {
+      const tab = await chrome.tabs.get(activeInfo.tabId);
+      const isWeb = tab?.url?.startsWith("http://") || tab?.url?.startsWith("https://");
+      if (!isWeb) return;
+      setLastPaTabId(activeInfo.tabId);
+    } catch { return; }
 
-  await loadFlowContext({ invalidateCaches: true });
+    await loadFlowContext({ invalidateCaches: true });
 
-  // Refresh the currently open panel
-  const activeBtn = getActivePanelBtn();
-  if (!activeBtn) return;
+    // Refresh the currently open panel
+    const activeBtn = getActivePanelBtn();
+    if (!activeBtn) return;
 
-  if (activeBtn === pasteBtn) {
-    const existingItems = getPasteState()?.pastedItems || null;
-    refreshPastePanel(existingItems);
-  } else {
-    closeAllPanels();
-    activeBtn.click();
-  }
+    if (activeBtn === pasteBtn) {
+      const existingItems = getPasteState()?.pastedItems || null;
+      refreshPastePanel(existingItems);
+    } else {
+      closeAllPanels();
+      activeBtn.click();
+    }
+  }, 300);
 });

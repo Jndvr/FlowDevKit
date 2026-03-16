@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flow Diff — FlowDevKit</title>
+  <link rel="stylesheet" href="shared/styles.css" />
+  <style>
+    html, body {
+      width: 100% !important;
+      max-width: none !important;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    #dvHeader {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #dvLogo { width: 20px; height: 20px; opacity: 0.75; }
+    #dvTitle { font-size: 13px; font-weight: 700; color: var(--text); flex-shrink: 0; }
+    #dvLegend { display: flex; gap: 6px; flex: 1; }
+    #dvMeta { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
+    #dvBack {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid var(--border); color: var(--text-2);
+      cursor: pointer; font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 5px; line-height: 1; transition: all 0.12s; flex-shrink: 0;
+    }
+    #dvBack:hover { color: var(--text); background: var(--surface-2); border-color: var(--text-3); }
+    #dvBack i { font-size: 12px; }
+    #dvClose {
+      background: none; border: none; color: var(--text-3);
+      cursor: pointer; font-size: 18px; padding: 2px 8px;
+      border-radius: 4px; line-height: 1; transition: all 0.12s; flex-shrink: 0;
+    }
+    #dvClose:hover { color: var(--text); background: var(--surface-2); }
+
+    /* ── Scrollable body ─────────────────────────────────────────── */
+    #dvBody { flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+    /* ── Full-window font overrides (larger than panel defaults) ─── */
+    #dvBody .sbs-line-ctx,
+    #dvBody .sbs-line-add,
+    #dvBody .sbs-line-rem,
+    #dvBody .sbs-line-empty {
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 0 12px;
+    }
+    #dvBody .sbs-col-head { font-size: 10px; padding: 6px 12px; }
+    #dvBody .sbs-section  { font-size: 10px; padding: 6px 12px 5px; }
+    #dvBody .sbs-action-header { padding: 5px 12px; }
+    #dvBody .sbs-action-name   { font-size: 11px; }
+    #dvBody .sbs-action-type   { font-size: 10px; }
+
+    /* ── Empty / error state ─────────────────────────────────────── */
+    #dvEmpty {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: var(--text-3); font-size: 14px; padding: 32px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="dvHeader">
+    <button id="dvBack" title="Close this tab and return to FlowDevKit (Esc)">
+      <i class="bi bi-arrow-left"></i> Back to FlowDevKit
+    </button>
+    <img src="icons/icon128.png" id="dvLogo" alt="FlowDevKit">
+    <span id="dvTitle">Side-by-side comparison</span>
+    <div class="diff-legend" id="dvLegend">
+      <span class="diff-legend-item added">+ Added</span>
+      <span class="diff-legend-item removed">− Removed</span>
+      <span class="diff-legend-item changed">~ Changed</span>
+    </div>
+    <div id="dvMeta"></div>
+    <button id="dvClose" title="Close tab (Esc)">✕</button>
+  </div>
+
+  <div id="dvBody">
+    <div id="dvContent"></div>
+  </div>
+
+  <script type="module" src="diff-view.js"></script>
+</body>
+</html>

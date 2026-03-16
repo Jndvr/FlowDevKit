@@ -544,6 +544,146 @@ function runLintRules(innerDef, flat) {
     }
   }
 
+  // ── Rules grounded in official Microsoft limits (limits-and-config) ─────────
+
+  // Rule 36: Action name exceeds 80-char hard limit
+  for (const item of flat) {
+    if (item.name.length > 80) {
+      push("error", "Action Name Too Long",
+        `Action name is ${item.name.length} chars — the hard limit is 80. Power Automate will refuse to save this flow.`,
+        item.name);
+    }
+  }
+
+  // Rule 37 / 38: Nesting depth at or near the 8-level hard limit
+  {
+    const maxDepth = flat.reduce((m, i) => Math.max(m, i.depth), 0);
+    if (maxDepth >= 8) {
+      const deepest = flat.filter(i => i.depth >= 8);
+      push("error", "Max Nesting Depth Reached",
+        `${deepest.length} action(s) at depth ${maxDepth} — the hard limit is 8. Power Automate will refuse to save. Refactor into child flows.`,
+        deepest[0]?.name || "Flow");
+    } else if (maxDepth >= 6) {
+      push("warn", "Deep Nesting",
+        `Max nesting depth is ${maxDepth} (hard limit: 8). Consider child flows before adding more nested logic.`,
+        "Flow structure");
+    }
+  }
+
+  // Rule 39: Switch case count at or near the 25-case hard limit
+  for (const item of flat.filter(i => i.type === "Switch")) {
+    const caseCount = Object.keys(item.action?.cases || {}).length;
+    if (caseCount > 25) {
+      push("error", "Switch Case Limit Exceeded",
+        `Switch has ${caseCount} cases — the hard limit is 25. Power Automate will refuse to save. Use nested conditions or a data-driven lookup instead.`,
+        item.name);
+    } else if (caseCount > 20) {
+      push("warn", "Switch: Approaching Case Limit",
+        `Switch has ${caseCount} cases (hard limit: 25). Consider refactoring into nested conditions or a lookup table.`,
+        item.name);
+    }
+  }
+
+  // Rule 40: Total action count approaching the 500-action hard limit
+  {
+    const totalCount = flat.length;
+    if (totalCount > 490) {
+      push("error", "Action Count At Limit",
+        `Flow has ${totalCount} actions — the hard limit is 500. Split into child flows immediately to avoid save failures.`,
+        "Flow");
+    } else if (totalCount > 400) {
+      push("warn", "Action Count Approaching Limit",
+        `Flow has ${totalCount} actions (hard limit: 500). Split into child flows to stay below the limit and improve maintainability.`,
+        "Flow");
+    }
+  }
+
+  // Rule 41: Recurrence below the 60-second minimum (hard limit)
+  for (const [tName, tDef] of Object.entries(innerDef?.triggers || {})) {
+    if (tDef.type !== "Recurrence") continue;
+    const freq     = (tDef.recurrence?.frequency || tDef.inputs?.recurrence?.frequency || "").toLowerCase();
+    const interval = +(tDef.recurrence?.interval  ?? tDef.inputs?.recurrence?.interval  ?? 1);
+    if (freq === "second" || (freq === "minute" && interval < 1)) {
+      push("error", "Recurrence Below Minimum",
+        `Recurrence set to every ${interval} ${freq}(s) — the hard minimum is 60 seconds. The trigger will fail to activate.`,
+        tName);
+    }
+  }
+
+  // Rule 42: Until loop using the default count of 60 (likely never reviewed)
+  for (const item of flat.filter(i => i.type === "Until")) {
+    if (item.action?.limit?.count === 60) {
+      push("info", "Until: Default Iteration Count",
+        "Until loop max count is 60 — this is the platform default and may never have been deliberately set. Confirm 60 iterations is sufficient.",
+        item.name);
+    }
+  }
+
+  // Rule 43: Expression approaching the 8,192-character hard limit
+  {
+    const EXPR_WARN = 6000;
+    for (const item of flat) {
+      const inputStr = JSON.stringify(item.action?.inputs || {});
+      const long = (inputStr.match(/@\{[^}]{100,}\}/g) || []).find(e => e.length > EXPR_WARN);
+      if (long) {
+        push("warn", "Expression Too Long",
+          `An expression in this action is ${long.length} chars (hard limit: 8,192). Break it into intermediate Compose steps.`,
+          item.name);
+      }
+    }
+  }
+
+  // Rule 44: Variable count approaching the 250-variable hard limit
+  {
+    const varCount = flat.filter(i => i.type === "InitializeVariable").length;
+    if (varCount > 200) {
+      push("warn", "Variable Count Approaching Limit",
+        `Flow initializes ${varCount} variables (hard limit: 250). Combine related variables into an Object variable.`,
+        "Flow");
+    }
+  }
+
+  // Rule 45: Flow description exceeds the 256-character hard limit
+  {
+    const desc = innerDef?.description || "";
+    if (desc.length > 256) {
+      push("error", "Description Too Long",
+        `Flow description is ${desc.length} chars — the hard limit is 256. Power Automate will truncate or reject it on save.`,
+        "Flow");
+    }
+  }
+
+  // Rule 46: @parameters() references to undefined parameters (runtime error)
+  {
+    const definedParams = new Set(Object.keys(innerDef?.parameters || {}));
+    const SKIP_PARAMS   = new Set(["$connections", "$authentication"]);
+    const PARAM_RE      = /parameters\(['"]([^'"]+)['"]\)/gi;
+    const seenMissing   = new Set();
+    for (const item of flat) {
+      const inputStr = JSON.stringify(item.action?.inputs || {});
+      PARAM_RE.lastIndex = 0;
+      let match;
+      while ((match = PARAM_RE.exec(inputStr)) !== null) {
+        const pName = match[1];
+        if (definedParams.has(pName) || SKIP_PARAMS.has(pName) || seenMissing.has(pName)) continue;
+        seenMissing.add(pName);
+        push("error", "Undefined Parameter",
+          `Expression references @parameters('${pName}') but this parameter is not defined in the flow. This will throw a runtime error.`,
+          item.name);
+      }
+    }
+  }
+
+  // Rule 47: Trigger concurrency so high that waiting-run queue may overflow
+  for (const [tName, tDef] of Object.entries(innerDef?.triggers || {})) {
+    const concurrency = tDef.runtimeConfiguration?.concurrency?.runs;
+    if (concurrency !== undefined && concurrency > 50) {
+      push("warn", "High Trigger Concurrency",
+        `Trigger concurrency is ${concurrency}. The waiting-runs queue caps at 10 + parallelism — slow actions at peak load may silently drop triggers.`,
+        tName);
+    }
+  }
+
   return findings;
 }
 
@@ -654,6 +794,37 @@ function computeMetrics(innerDef, flat, findings) {
   };
 }
 
+// ── Definition health bar ─────────────────────────────────────────────────────
+function renderHealthBar(flat, innerDef) {
+  const actionCount = flat.length;
+  const maxDepth    = flat.reduce((m, i) => Math.max(m, i.depth), 0);
+  const varCount    = flat.filter(i => i.type === "InitializeVariable").length;
+
+  function makeGauge(label, value, max, warnAt, errorAt) {
+    const pct = Math.min((value / max) * 100, 100);
+    const cls  = value >= errorAt ? "error" : value >= warnAt ? "warn" : "ok";
+    const g    = document.createElement("div");
+    g.className = "health-gauge";
+    g.title     = `${value} / ${max}`;
+    g.innerHTML = `
+      <div class="health-gauge-row">
+        <span class="health-gauge-label">${label}</span>
+        <span class="health-gauge-value ${cls}">${value}<span class="health-gauge-max">/${max}</span></span>
+      </div>
+      <div class="health-gauge-track">
+        <div class="health-gauge-fill ${cls}" style="width:${pct.toFixed(1)}%"></div>
+      </div>`;
+    return g;
+  }
+
+  const bar = document.createElement("div");
+  bar.className = "health-bar";
+  bar.appendChild(makeGauge("Actions",   actionCount, 500, 400, 490));
+  bar.appendChild(makeGauge("Depth",     maxDepth,    8,   6,   8));
+  bar.appendChild(makeGauge("Variables", varCount,    250, 200, 245));
+  return bar;
+}
+
 function renderMetrics(metrics, container) {
   const CLS = { Low: "good", Good: "good", Fair: "warn", Medium: "warn", High: "bad", Poor: "bad", "Very High": "bad", Critical: "bad" };
   const row = document.createElement("div");
@@ -697,8 +868,9 @@ function renderMetrics(metrics, container) {
 }
 
 // ── Render panel ──────────────────────────────────────────────────────────────
-function renderLintPanel(findings, metrics, flowName) {
+function renderLintPanel(findings, metrics, flowName, flat, innerDef) {
   lintList.innerHTML = "";
+  lintList.appendChild(renderHealthBar(flat, innerDef));
   renderMetrics(metrics, lintList);
 
   if (!findings.length) {
@@ -797,7 +969,7 @@ lintBtn.addEventListener("click", async () => {
     const flat     = flattenActions(innerDef?.actions || {});
     const findings = runLintRules(innerDef, flat);
     const metrics  = computeMetrics(innerDef, flat, findings);
-    renderLintPanel(findings, metrics, result.displayName || "this flow");
+    renderLintPanel(findings, metrics, result.displayName || "this flow", flat, innerDef);
     lintPanel.classList.add("show");
   } catch (err) {
     (([t, d]) => showStatus("error", t, d || ""))((err.message || String(err)).split("\0"));

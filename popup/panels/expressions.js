@@ -17,11 +17,30 @@ registerPanel(exprBtn, exprPanel);
 function extractExprs(val, fieldPath = "") {
   if (!val || typeof val !== "string") return [];
   const results = [];
-  const inlineRe = /@\{([^}]+)\}/g;
-  let m;
-  while ((m = inlineRe.exec(val)) !== null) {
-    results.push({ field: fieldPath, expr: `@{${m[1]}}`, raw: m[1] });
+
+  // Balanced-brace scanner: correctly handles @{…} expressions that contain
+  // nested braces (e.g. @{if(contains('{'), 'yes', 'no')}), which the
+  // simple [^}]+ regex would mis-parse by stopping at the first closing brace.
+  let i = 0;
+  while (i < val.length) {
+    if (val[i] === "@" && val[i + 1] === "{") {
+      let depth = 1;
+      let j = i + 2;
+      while (j < val.length && depth > 0) {
+        if (val[j] === "{") depth++;
+        else if (val[j] === "}") depth--;
+        j++;
+      }
+      if (depth === 0) {
+        const inner = val.slice(i + 2, j - 1);
+        results.push({ field: fieldPath, expr: `@{${inner}}`, raw: inner });
+        i = j;
+        continue;
+      }
+    }
+    i++;
   }
+
   if (!results.length && val.startsWith("@")) {
     results.push({ field: fieldPath, expr: val, raw: val.slice(1) });
   }

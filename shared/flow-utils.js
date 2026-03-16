@@ -1,3 +1,6 @@
+// depth limit of 10: Power Automate flows rarely nest more than 5–6 levels deep
+// in practice; 10 gives a generous safety margin without risking stack overflows
+// on malformed or adversarially-crafted flow JSON.
 export function countActions(actions, depth = 0) {
   if (!actions || typeof actions !== "object" || depth > 10) return 0;
   let n = 0;
@@ -12,6 +15,8 @@ export function countActions(actions, depth = 0) {
   return n;
 }
 
+// depth limit of 15: slightly higher than action traversal because connection
+// references and authentication objects can be deeply nested inside inputs.
 export function normalizeAuth(obj, depth = 0) {
   if (!obj || typeof obj !== "object" || depth > 15) return obj;
   if (Array.isArray(obj)) return obj.map(v => normalizeAuth(v, depth + 1));
@@ -118,6 +123,8 @@ export function detectBranches(actions) {
   return parallel;
 }
 
+// depth limit of 4: only needs a few levels to reach string values inside
+// action inputs; deeper traversal would add cost with no practical benefit.
 export function extractStrings(obj, depth = 0) {
   if (depth > 4 || !obj) return "";
   if (typeof obj === "string") return obj;
@@ -125,6 +132,7 @@ export function extractStrings(obj, depth = 0) {
   return Object.values(obj).map(v => extractStrings(v, depth + 1)).join(" ");
 }
 
+// depth limit of 10: matches countActions — same rationale.
 export function flattenActions(actions, depth = 0, parentPath = "", branchLabel = "") {
   if (!actions || typeof actions !== "object" || depth > 10) return [];
   const result = [];
