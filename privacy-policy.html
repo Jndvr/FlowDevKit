@@ -66,7 +66,7 @@
 
     <div class="badge">FlowDevKit</div>
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: March 2026 &nbsp;·&nbsp; Author: Jan Düver</p>
+    <p class="meta">Last updated: March 2026 &nbsp;·&nbsp; Version 1.2.0 &nbsp;·&nbsp; Author: Jan Düver</p>
 
     <div class="highlight">
       <strong>Short version:</strong> FlowDevKit collects no personal data, sends nothing to external servers, and stores only your local UI preferences. Everything runs in your browser.
@@ -74,18 +74,20 @@
 
     <div class="card">
       <h2>1. What FlowDevKit Does</h2>
-      <p>FlowDevKit is a browser extension for Microsoft Power Automate developers. It reads the flow definition from the Power Automate API using your existing browser session and presents it through a local developer toolbox (copy JSON, inspect expressions, analyze flow quality, view run errors, and more).</p>
+      <p>FlowDevKit is a browser extension for Microsoft Power Automate developers. It reads the flow definition from the Power Automate API using your existing browser session and presents it through a local developer toolbox — copy JSON, inspect expressions, analyze flow quality, view run history and errors, track variables, and more.</p>
+      <p>Since v1.2.0 the extension also includes an <strong>Environment Variables</strong> panel that queries the Dataverse OData API to list environment variable definitions for the current Power Platform environment. This call is made using a Dataverse-scoped session token obtained from your browser's existing Microsoft authentication state — no additional login is required.</p>
     </div>
 
     <div class="card">
       <h2>2. Data We Do Not Collect</h2>
       <p>FlowDevKit does <strong>not</strong>:</p>
       <ul>
-        <li>Collect, store, or transmit your flow data to any server</li>
-        <li>Collect personal information (name, email, account details)</li>
+        <li>Collect, store, or transmit your flow data, environment variables, or run history to any server</li>
+        <li>Collect personal information (name, email, account details, or user IDs)</li>
         <li>Track usage, analytics, or telemetry of any kind</li>
-        <li>Store authentication tokens, passwords, or session cookies beyond your local browser session</li>
-        <li>Communicate with any server other than official Microsoft Power Platform APIs</li>
+        <li>Store authentication tokens persistently — all tokens are held in memory for the duration of the browser session only and are discarded when the browser is closed</li>
+        <li>Communicate with any server other than official Microsoft Power Platform and Dataverse APIs</li>
+        <li>Modify your flows unless you actively initiate a paste operation using the Paste Actions feature</li>
       </ul>
     </div>
 
@@ -95,10 +97,11 @@
       <ul>
         <li>Selected API region (e.g. EMEA, US)</li>
         <li>Export format preference (Definition only / Full export)</li>
-        <li>Color theme (light / dark)</li>
+        <li>Colour theme (light / dark)</li>
         <li>Custom API host (if entered)</li>
       </ul>
       <p>These preferences never leave your device and can be cleared at any time by removing the extension.</p>
+      <p>Additionally, the extension maintains an in-memory cache of Dataverse Bearer tokens captured passively from outgoing browser requests to <code>*.dynamics.com</code>. This cache is stored only in the service worker's memory, is never written to disk or <code>chrome.storage</code>, and is cleared automatically when the service worker terminates (typically after a few minutes of inactivity).</p>
     </div>
 
     <div class="card">
@@ -114,27 +117,23 @@
           </tr>
           <tr>
             <td><code>tabs</code></td>
-            <td>Scans tab frames to locate the correct Power Automate frame URL, since the designer loads inside an iframe.</td>
+            <td>Scans tab frames to locate the correct Power Automate frame URL (the designer loads inside an iframe) and to scan open Power Apps tabs for a Dataverse authentication token.</td>
           </tr>
           <tr>
             <td><code>scripting</code></td>
-            <td>Executes API fetch calls in the Power Automate tab context so requests carry your existing session authentication.</td>
+            <td>Injects a token-extraction script into the active tab to read Microsoft's authentication library (MSAL) token cache. This is how the extension obtains the Bearer token needed to call the Power Automate and Dataverse APIs on your behalf — the same token the page itself uses.</td>
           </tr>
           <tr>
             <td><code>clipboardWrite</code></td>
-            <td>Copies flow JSON or selected actions to your clipboard when you click Copy.</td>
+            <td>Copies flow JSON, individual actions, expressions, or environment variable references to your clipboard when you click a Copy button.</td>
           </tr>
           <tr>
-            <td><code>clipboardRead</code></td>
-            <td>Reads clipboard content when you use the Paste Actions feature to inject previously copied actions into a flow.</td>
-          </tr>
-          <tr>
-            <td><code>cookies</code></td>
-            <td>Reads your Power Automate session cookie to authenticate API calls made from the background service worker. No cookie data is stored or transmitted outside your browser.</td>
+            <td><code>webRequest</code></td>
+            <td>Observes outgoing request headers on <code>*.dynamics.com</code> to passively capture a Dataverse Bearer token. This token is required for the Environment Variables panel. The listener only reads the <code>Authorization</code> header value; it does not modify, block, or redirect any requests. The captured token is held in memory only.</td>
           </tr>
           <tr>
             <td><code>webNavigation</code></td>
-            <td>Detects tab navigation so the extension can refresh its flow context and warn you when the context may be stale.</td>
+            <td>Detects tab navigation events so the extension can refresh its flow context and warn you if the context may be stale after navigating to a different flow.</td>
           </tr>
           <tr>
             <td><code>sidePanel</code></td>
@@ -142,28 +141,71 @@
           </tr>
           <tr>
             <td><code>storage</code></td>
-            <td>Saves your UI preferences (region, format, theme) locally so they persist across sessions.</td>
+            <td>Saves your UI preferences (region, format, theme) locally so they persist across browser sessions.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="card">
-      <h2>5. Third-Party Services</h2>
-      <p>FlowDevKit only communicates with official Microsoft Power Platform endpoints:</p>
-      <ul>
-        <li><code>*.api.flow.microsoft.com</code> — Power Automate REST API</li>
-        <li><code>make.powerautomate.com</code> / <code>make.powerapps.com</code> — Maker portal</li>
-        <li><code>*.environment.api.powerplatform.com</code> — Power Platform environment API</li>
-        <li><code>login.microsoftonline.com</code> — Microsoft authentication</li>
-        <li><code>api.bap.microsoft.com</code> — Business Application Platform API</li>
-      </ul>
-      <p>No data is sent to the extension author or any other third party.</p>
+      <h2>5. Host Permissions Explained</h2>
+      <table>
+        <thead>
+          <tr><th>Host</th><th>Why it's needed</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>make.powerautomate.com</code></td>
+            <td>Primary target site — the extension is activated when the Power Automate flow designer is open.</td>
+          </tr>
+          <tr>
+            <td><code>make.powerapps.com</code><br><code>make.preview.powerapps.com</code></td>
+            <td>The extension can be opened from a Power Apps solution page. These tabs are also scanned for a Dataverse authentication token needed by the Environment Variables panel.</td>
+          </tr>
+          <tr>
+            <td><code>copilotstudio.microsoft.com</code></td>
+            <td>Flow context can be resolved when the extension is opened from a Copilot Studio tab.</td>
+          </tr>
+          <tr>
+            <td><code>*.api.flow.microsoft.com</code></td>
+            <td>Power Automate REST API — used to fetch flow definitions and run history.</td>
+          </tr>
+          <tr>
+            <td><code>*.environment.api.powerplatform.com</code></td>
+            <td>Power Platform per-environment API — used to fetch environment metadata and flow lists.</td>
+          </tr>
+          <tr>
+            <td><code>api.powerplatform.com</code></td>
+            <td>Power Platform global API — fallback for flow and connection lookups.</td>
+          </tr>
+          <tr>
+            <td><code>api.powerapps.com</code></td>
+            <td>Power Apps API — used to look up connection details for the Paste Actions feature.</td>
+          </tr>
+          <tr>
+            <td><code>api.bap.microsoft.com</code></td>
+            <td>Business Application Platform API — used to resolve the Dataverse instance URL for the current environment (required by the Environment Variables panel).</td>
+          </tr>
+          <tr>
+            <td><code>login.microsoftonline.com</code></td>
+            <td>Microsoft identity platform — required for authenticated API calls made from the background service worker.</td>
+          </tr>
+          <tr>
+            <td><code>*.dynamics.com</code></td>
+            <td>Dataverse OData API — used by the Environment Variables panel to query <code>environmentvariabledefinition</code> records. The <code>webRequest</code> listener is also registered for this host to passively capture the Dataverse Bearer token.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>6. Third-Party Services</h2>
+      <p>FlowDevKit communicates exclusively with official Microsoft Power Platform endpoints listed in section 5. No data is sent to the extension author, analytics providers, advertising networks, or any other third party.</p>
     </div>
 
     <div class="card">
       <h2>7. Changes to This Policy</h2>
-      <p>If this policy is updated, the "Last updated" date at the top of this page will change. Significant changes will also be noted in the extension's release notes on GitHub.</p>
+      <p>If this policy is updated, the "Last updated" date and version number at the top of this page will change. Significant changes will also be noted in the extension's release notes on GitHub.</p>
     </div>
 
     <div class="card">
