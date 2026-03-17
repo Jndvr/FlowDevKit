@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FlowDevKit — Promo Tiles</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1c23;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 56px;
+  }
+  .section-label {
+    color: #555;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+
+  /* ═══════════════════════════════════════
+     MARQUEE  1400 × 560
+  ═══════════════════════════════════════ */
+  .marquee {
+    width: 1400px;
+    height: 560px;
+    background: #0c0e14;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* grid lines */
+  .marquee-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  /* big glow top-left */
+  .marquee-glow {
+    position: absolute;
+    top: -160px;
+    left: -80px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(79,142,247,0.22) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* vertical separator */
+  .marquee-sep {
+    position: absolute;
+    left: 480px;
+    top: 40px;
+    bottom: 40px;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(79,142,247,0.3) 30%, rgba(79,142,247,0.3) 70%, transparent);
+    z-index: 3;
+  }
+
+  .marquee-left {
+    position: relative;
+    z-index: 4;
+    width: 480px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 64px;
+    gap: 22px;
+  }
+
+  .mq-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(79,142,247,0.12);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: #6ba3f8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .mq-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .mq-logo-row img { width: 52px; height: 52px; }
+
+  .mq-brand {
+    font-size: 38px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .mq-brand span { color: #4f8ef7; }
+
+  .mq-tagline {
+    font-size: 16px;
+    color: #8090b8;
+    line-height: 1.5;
+    max-width: 340px;
+  }
+
+  .mq-features-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .mq-feat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #c0cce8;
+    font-weight: 500;
+  }
+
+  .mq-feat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4f8ef7;
+    flex-shrink: 0;
+  }
+
+  .mq-free {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #4f8ef7;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 11px 24px;
+    border-radius: 10px;
+    width: fit-content;
+    letter-spacing: 0.02em;
+    margin-top: 4px;
+  }
+
+  .marquee-right {
+    position: relative;
+    z-index: 4;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 16px;
+    padding: 40px 48px 40px 60px;
+    align-content: center;
+  }
+
+  .mq-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mq-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: transparent;
+  }
+
+  .mq-card:nth-child(1)::before,
+  .mq-card:nth-child(4)::before { background: linear-gradient(90deg, #4f8ef7, transparent); }
+  .mq-card:nth-child(2)::before { background: linear-gradient(90deg, #7c64f5, transparent); }
+  .mq-card:nth-child(5)::before { background: linear-gradient(90deg, #5bbfad, transparent); }
+  .mq-card:nth-child(3)::before { background: linear-gradient(90deg, #f07b54, transparent); }
+  .mq-card:nth-child(6)::before { background: linear-gradient(90deg, #e8b84b, transparent); }
+
+  .mq-icon { font-size: 22px; line-height: 1; margin-bottom: 2px; }
+  .mq-title { font-size: 13px; font-weight: 700; color: #dde4f4; letter-spacing: -0.1px; }
+  .mq-desc { font-size: 11px; color: #5c6888; line-height: 1.55; }
+
+
+  /* ═══════════════════════════════════════
+     LARGE  920 × 680
+  ═══════════════════════════════════════ */
+  .large {
+    width: 920px;
+    height: 680px;
+    background: #0c0e14;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px 52px 44px;
+    gap: 0;
+  }
+
+  .large-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.04) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .large-glow {
+    position: absolute;
+    top: -160px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 760px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(79,142,247,0.18) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .large-head {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .large-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .large-logo-row img { width: 40px; height: 40px; }
+
+  .large-brand {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.8px;
+  }
+
+  .large-brand span { color: #4f8ef7; }
+
+  .large-tagline {
+    font-size: 14px;
+    color: #6a7898;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+
+  .large-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+  }
+
+  .lg-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 20px 18px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lg-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .lg-card:nth-child(1)::before { background: linear-gradient(90deg, #4f8ef7, transparent); }
+  .lg-card:nth-child(2)::before { background: linear-gradient(90deg, #7c64f5, transparent); }
+  .lg-card:nth-child(3)::before { background: linear-gradient(90deg, #5bbfad, transparent); }
+  .lg-card:nth-child(4)::before { background: linear-gradient(90deg, #f07b54, transparent); }
+  .lg-card:nth-child(5)::before { background: linear-gradient(90deg, #e8b84b, transparent); }
+  .lg-card:nth-child(6)::before { background: linear-gradient(90deg, #b05cf5, transparent); }
+
+  .lg-icon { font-size: 17px; line-height: 1; margin-bottom: 3px; }
+  .lg-title { font-size: 12px; font-weight: 700; color: #dde4f4; letter-spacing: -0.1px; }
+  .lg-desc { font-size: 10.5px; color: #505878; line-height: 1.5; }
+
+  .large-footer {
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
+    padding-top: 24px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .lf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(79,142,247,0.08);
+    border: 1px solid rgba(79,142,247,0.2);
+    color: #5580c8;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 5px 13px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+
+  /* ═══════════════════════════════════════
+     SMALL  440 × 280
+  ═══════════════════════════════════════ */
+  .small {
+    width: 440px;
+    height: 280px;
+    background: #0c0e14;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 36px;
+    gap: 15px;
+  }
+
+  .small-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .small-glow {
+    position: absolute;
+    top: -60px;
+    right: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(79,142,247,0.22) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .small-logo-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .small-logo-row img { width: 32px; height: 32px; }
+
+  .small-brand {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .small-brand span { color: #4f8ef7; }
+
+  .small-tagline {
+    position: relative;
+    z-index: 2;
+    font-size: 12.5px;
+    color: #6a7898;
+    line-height: 1.5;
+    max-width: 310px;
+  }
+
+  .small-pills {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #8090b0;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .sm-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #4f8ef7;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ MARQUEE 1400 × 560 ═══ -->
+<div>
+  <div class="section-label">Marquee — 1400 × 560 px</div>
+  <div class="marquee" id="marquee">
+    <div class="marquee-bg"></div>
+    <div class="marquee-glow"></div>
+    <div class="marquee-sep"></div>
+
+    <div class="marquee-left">
+      <div class="mq-eyebrow">⚡ Power Automate</div>
+      <div class="mq-logo-row">
+        <img src="../icons/icon128.png" alt="">
+        <div class="mq-brand">Flow<span>DevKit</span></div>
+      </div>
+      <div class="mq-tagline">
+        The developer toolkit for Power Automate — debug, inspect, and export right from your browser.
+      </div>
+      <div class="mq-features-mini">
+        <div class="mq-feat"><div class="mq-feat-dot"></div>Works as popup and docked side panel</div>
+        <div class="mq-feat"><div class="mq-feat-dot"></div>No login required — uses your existing session</div>
+        <div class="mq-feat"><div class="mq-feat-dot"></div>Light &amp; dark theme</div>
+      </div>
+      <div class="mq-free">Free to install →</div>
+    </div>
+
+    <div class="marquee-right">
+      <div class="mq-card">
+        <div class="mq-icon">🔍</div>
+        <div class="mq-title">Run History &amp; Errors</div>
+        <div class="mq-desc">Browse the last 15 runs. See exactly which actions failed with full error detail and one-click export.</div>
+      </div>
+      <div class="mq-card">
+        <div class="mq-icon">⚡</div>
+        <div class="mq-title">Performance View</div>
+        <div class="mq-desc">Every action sorted by duration with a proportional fill bar. Find bottlenecks in seconds.</div>
+      </div>
+      <div class="mq-card">
+        <div class="mq-icon">📋</div>
+        <div class="mq-title">Copy &amp; Export</div>
+        <div class="mq-desc">Copy any single action, a selected group, or the full flow definition as clean JSON.</div>
+      </div>
+      <div class="mq-card">
+        <div class="mq-icon">🔬</div>
+        <div class="mq-title">Expression Inspector</div>
+        <div class="mq-desc">Scan and index every @{…} expression across the whole flow, grouped by action.</div>
+      </div>
+      <div class="mq-card">
+        <div class="mq-icon">📊</div>
+        <div class="mq-title">Analyze Flow</div>
+        <div class="mq-desc">35 lint rules with complexity, maintainability, and reliability scores.</div>
+      </div>
+      <div class="mq-card">
+        <div class="mq-icon">🌐</div>
+        <div class="mq-title">Env Variables</div>
+        <div class="mq-desc">Browse Dataverse environment variables and copy @parameters() references instantly.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LARGE 920 × 680 ═══ -->
+<div>
+  <div class="section-label">Large tile — 920 × 680 px</div>
+  <div class="large" id="large">
+    <div class="large-bg"></div>
+    <div class="large-glow"></div>
+
+    <div class="large-head">
+      <div class="large-logo-row">
+        <img src="../icons/icon128.png" alt="">
+        <div class="large-brand">Flow<span>DevKit</span></div>
+      </div>
+      <div class="large-tagline">Power Automate developer tools — right inside your browser</div>
+    </div>
+
+    <div class="large-grid">
+      <div class="lg-card">
+        <div class="lg-icon">🔍</div>
+        <div class="lg-title">Run History &amp; Errors</div>
+        <div class="lg-desc">Browse runs, inspect failures, copy error summaries for support tickets.</div>
+      </div>
+      <div class="lg-card">
+        <div class="lg-icon">⚡</div>
+        <div class="lg-title">Performance View</div>
+        <div class="lg-desc">All actions sorted by duration with a visual fill bar — spot bottlenecks fast.</div>
+      </div>
+      <div class="lg-card">
+        <div class="lg-icon">📦</div>
+        <div class="lg-title">Copy &amp; Export</div>
+        <div class="lg-desc">Copy single actions, bulk selections, or the full flow definition as JSON.</div>
+      </div>
+      <div class="lg-card">
+        <div class="lg-icon">🔬</div>
+        <div class="lg-title">Expression Inspector</div>
+        <div class="lg-desc">Index every @{…} expression across the flow, grouped and searchable.</div>
+      </div>
+      <div class="lg-card">
+        <div class="lg-icon">📊</div>
+        <div class="lg-title">Analyze Flow</div>
+        <div class="lg-desc">35 lint rules with complexity, maintainability &amp; reliability scores.</div>
+      </div>
+      <div class="lg-card">
+        <div class="lg-icon">🌐</div>
+        <div class="lg-title">Env Variables</div>
+        <div class="lg-desc">Browse Dataverse env vars and copy @parameters() references into expressions.</div>
+      </div>
+    </div>
+
+    <div class="large-footer">
+      <div class="lf-pill">✦ Free</div>
+      <div class="lf-pill">✦ No sign-in required</div>
+      <div class="lf-pill">✦ Popup &amp; side panel</div>
+      <div class="lf-pill">✦ Light &amp; dark theme</div>
+      <div class="lf-pill">✦ Chrome &amp; Edge</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SMALL 440 × 280 ═══ -->
+<div>
+  <div class="section-label">Small tile — 440 × 280 px</div>
+  <div class="small" id="small">
+    <div class="small-bg"></div>
+    <div class="small-glow"></div>
+
+    <div class="small-logo-row">
+      <img src="../icons/icon128.png" alt="">
+      <div class="small-brand">Flow<span>DevKit</span></div>
+    </div>
+    <div class="small-tagline">
+      Power Automate developer tools — debug, copy, and analyse right from your browser.
+    </div>
+    <div class="small-pills">
+      <div class="sm-pill"><span class="sm-dot"></span>Run History</div>
+      <div class="sm-pill"><span class="sm-dot"></span>Performance</div>
+      <div class="sm-pill"><span class="sm-dot"></span>Lint Analyzer</div>
+      <div class="sm-pill"><span class="sm-dot"></span>Copy Actions</div>
+      <div class="sm-pill"><span class="sm-dot"></span>Expressions</div>
+      <div class="sm-pill"><span class="sm-dot"></span>Env Variables</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
