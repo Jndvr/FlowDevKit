@@ -93,36 +93,38 @@ For GCC, GovCloud, or sovereign clouds — enter your full API host in the **Cus
 
 ## Tools — Detailed Reference
 
----
-
-### Copy JSON
+<details>
+<summary><strong>Copy JSON</strong> — Copy the full flow definition to the clipboard</summary>
 
 Copies the complete flow definition to your clipboard. What gets copied depends on the **Export Format** setting:
 
-- **Definition only** — includes `triggers` and `actions` only (most common use case — paste into another flow or share with a colleague)
+- **Definition only** — includes `triggers` and `actions` only (most common use case — share with a colleague or save for reference)
 - **Full export** — also includes `connectionReferences` (required when the recipient needs to re-map connections in a different environment)
 
 After copying, a toast confirms how many actions and the trigger name were included.
 
----
+</details>
 
-### Export JSON
+<details>
+<summary><strong>Export JSON</strong> — Download the flow as a .json file</summary>
 
 Downloads the flow as a `.json` file to your computer. The filename is auto-generated from the flow name and timestamp. Uses the same **Export Format** setting as Copy JSON.
 
 Useful for keeping a local backup, doing a diff between versions, or loading the flow into an external tool.
 
----
+</details>
 
-### Copy Trigger
+<details>
+<summary><strong>Copy Trigger</strong> — Copy just the trigger configuration</summary>
 
 Copies only the trigger configuration block — the `triggers` object — as JSON. Everything about how the flow starts: trigger type, inputs, conditions, recurrence settings, and split-on configuration.
 
 Use this when you need to replicate a trigger in a new flow without copying the entire definition.
 
----
+</details>
 
-### Copy Connection Refs
+<details>
+<summary><strong>Copy Connection Refs</strong> — Extract all connection reference keys</summary>
 
 Extracts all `connectionReferences` defined in the flow and copies them to the clipboard.
 
@@ -133,9 +135,10 @@ Each reference includes:
 
 If any connection reference is missing a connection ID — a common issue in exported / imported flows — a warning is shown listing the incomplete references.
 
----
+</details>
 
-### Quick Copy Action
+<details>
+<summary><strong>Quick Copy Action</strong> — Search and copy any single action by name</summary>
 
 A search-as-you-type panel for copying a single action.
 
@@ -143,11 +146,12 @@ A search-as-you-type panel for copying a single action.
 2. Each result shows the action name and a human-readable type label
 3. Click the **copy** button on any result
 
-What gets copied is a complete, portable "action envelope": the action definition with all inputs, run-after configuration, and the connection references it depends on. Authentication placeholders are normalised to `@parameters('$authentication')` so the copied action can be pasted directly into a different flow.
+What gets copied is a complete, portable "action envelope": the action definition with all inputs, run-after configuration, and the connection references it depends on. Authentication placeholders are normalised to `@parameters('$authentication')`.
 
----
+</details>
 
-### Select Actions to Copy
+<details>
+<summary><strong>Select Actions to Copy</strong> — Multi-select actions with dependency resolution</summary>
 
 A multi-select panel for bulk-copying groups of actions.
 
@@ -166,9 +170,10 @@ A multi-select panel for bulk-copying groups of actions.
 
 **Copy Selection:** Exports only the checked actions as JSON, including the connection references they use. If any referenced connector is missing its connection ID, a warning lists the incomplete entries.
 
----
+</details>
 
-### Run History & Errors
+<details>
+<summary><strong>Run History &amp; Errors</strong> — Browse runs, inspect failures, copy error detail</summary>
 
 Fetches the 15 most recent run records and displays them in a scannable list.
 
@@ -204,9 +209,10 @@ Two tabs appear at the top of the detail pane.
 
 Click the back arrow to return to the run list.
 
----
+</details>
 
-### Expression Inspector
+<details>
+<summary><strong>Expression Inspector</strong> — Scan and decode every Power FX expression in the flow</summary>
 
 Scans the entire flow definition and extracts every Power FX / workflow expression — anything inside `@{...}` — from action inputs, conditions, parameters, and outputs.
 
@@ -222,9 +228,10 @@ Scans the entire flow definition and extracts every Power FX / workflow expressi
 
 Handles nested braces correctly — `@{if(contains('{a}', 'x'), '...', '...')}` is parsed as a single expression, not split at the inner brace.
 
----
+</details>
 
-### Variable Tracker
+<details>
+<summary><strong>Variable Tracker</strong> — List all variables with init values and usage locations</summary>
 
 Lists every variable in the flow — where it is initialised, what type it is, and where it gets changed.
 
@@ -243,9 +250,10 @@ Each `Set variable` action is shown with:
 
 Recursively walks all nesting levels: variables defined inside conditions, loops, switch branches, or scopes are all captured.
 
----
+</details>
 
-### Environment Variables
+<details>
+<summary><strong>Environment Variables</strong> — Browse Dataverse env vars and copy @parameters() references</summary>
 
 Queries the Dataverse OData API for all `environmentvariabledefinition` records in the current Power Platform environment.
 
@@ -256,16 +264,17 @@ Queries the Dataverse OData API for all `environmentvariabledefinition` records 
 - Current value (or default value if no override is set) — truncated to 64 characters in the list view; Secrets are always masked as `••••••`
 
 **Interactions:**
-- Click the **`@`** button — copies `@parameters('schemaname')` to your clipboard. Paste directly into a flow expression to reference the variable without typing the schema name manually.
+- Click the **`@`** button — copies `@parameters('schemaname')` to your clipboard, ready to paste into a flow expression
 - **Click any row** — expands it to show the full untruncated value in a scrollable monospace block, plus a **Copy value** button
 
 **Search:** Filters by display name, schema name, or description text.
 
 **Authentication note:** Dataverse requires a separate session token from the main Power Automate token. FlowDevKit tries to acquire it automatically by scanning open browser tabs. If none is found, an inline prompt appears with a button that opens the Power Apps Tables page for your environment — loading that page acquires the token, after which you can retry.
 
----
+</details>
 
-### Analyze Flow
+<details>
+<summary><strong>Analyze Flow</strong> — 35 best-practice checks with complexity, maintainability, and reliability scores</summary>
 
 Runs 35 best-practice lint rules against the flow definition and computes three quality scores.
 
@@ -351,6 +360,8 @@ Each finding shows a severity icon, rule name, and the action it refers to. Find
 
 </details>
 
+</details>
+
 ---
 
 ## Permissions
@@ -360,7 +371,7 @@ Each finding shows a severity icon, rule name, and the action it refers to. Find
 | `activeTab` | Detect the currently open flow URL |
 | `tabs` | Scan tab frames to resolve flow context |
 | `scripting` | Inject token-extraction scripts into the active tab |
-| `clipboardWrite` / `clipboardRead` | Copy and paste flow JSON |
+| `clipboardWrite` | Copy flow JSON, actions, and references to the clipboard |
 | `webRequest` | Passively capture Dataverse auth tokens from *.dynamics.com requests |
 | `webNavigation` | Track tab navigation for context refresh |
 | `sidePanel` | Enable the docked side panel mode |
