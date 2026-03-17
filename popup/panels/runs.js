@@ -8,6 +8,7 @@ import { registerPanel, closeAllPanels, setActiveBtn, showStatus, handleApiError
 const runsBtn          = document.getElementById("runsBtn");
 const runsPanel        = document.getElementById("runsPanel");
 const runsBody         = document.getElementById("runsBody");
+const runsPerfBody     = document.getElementById("runsPerfBody");
 const runsPanelTitle   = document.getElementById("runsPanelTitle");
 const runsBackBtn      = document.getElementById("runsBackBtn");
 const runsPanelFooter  = document.getElementById("runsPanelFooter");
@@ -18,6 +19,9 @@ const runsChart        = document.getElementById("runsChart");
 const runsRatio        = document.getElementById("runsRatio");
 const runsStatLabel    = document.getElementById("runsStatLabel");
 const runsStatAvg      = document.getElementById("runsStatAvg");
+const runsDetailTabs   = document.getElementById("runsDetailTabs");
+const runsTabErrors    = document.getElementById("runsTabErrors");
+const runsTabPerf      = document.getElementById("runsTabPerf");
 
 registerPanel(runsBtn, runsPanel);
 
@@ -173,12 +177,105 @@ function renderSparkline(runs) {
   return wrap;
 }
 
+// ── Performance view ──────────────────────────────────────────────────────────
+let _perfData = [];   // [{ name, status, dur }] built during loadRunDetail
+
+function renderPerfView() {
+  runsPerfBody.innerHTML = "";
+
+  const timed   = _perfData.filter(a => a.dur !== null).sort((a, b) => b.dur - a.dur);
+  const untimed = _perfData.filter(a => a.dur === null);
+  const all     = [...timed, ...untimed];
+
+  if (!all.length) {
+    runsPerfBody.innerHTML = `<div class="runs-empty">No action timing data available for this run.</div>`;
+    return;
+  }
+
+  const maxDur = timed.length ? timed[0].dur : 1;
+  const total  = _perfData.reduce((s, a) => s + (a.dur || 0), 0);
+
+  // Summary bar
+  const summary = document.createElement("div");
+  summary.className = "perf-summary";
+  summary.innerHTML =
+    `<span class="perf-summary-stat">${all.length} action${all.length !== 1 ? "s" : ""}</span>` +
+    `<span class="perf-summary-sep">·</span>` +
+    `<span class="perf-summary-stat">Total <strong>${fmtDuration(total)}</strong></span>` +
+    (timed.length ? `<span class="perf-summary-sep">·</span><span class="perf-summary-stat">Slowest <strong>${fmtDuration(timed[0].dur)}</strong></span>` : "");
+  runsPerfBody.appendChild(summary);
+
+  const list = document.createElement("div");
+  list.className = "perf-list";
+
+  for (const action of all) {
+    const pct = action.dur !== null ? Math.max(3, (action.dur / maxDur) * 100) : 2;
+    const durLabel = action.dur !== null ? fmtDuration(action.dur) : "—";
+
+    // Status dot colour class
+    const dotClass = {
+      Succeeded: "Succeeded", Failed: "Failed",
+      TimedOut: "TimedOut", Skipped: "Skipped",
+    }[action.status] || "Skipped";
+
+    const row = document.createElement("div");
+    row.className = "perf-row";
+
+    const head = document.createElement("div");
+    head.className = "perf-row-head";
+
+    const dot = document.createElement("span");
+    dot.className = `perf-dot perf-dot-${dotClass}`;
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "perf-name";
+    nameEl.textContent = action.name;
+    nameEl.title = action.name;
+
+    const durEl = document.createElement("span");
+    durEl.className = "perf-dur";
+    durEl.textContent = durLabel;
+
+    head.append(dot, nameEl, durEl);
+
+    const track = document.createElement("div");
+    track.className = "perf-track";
+    const fill = document.createElement("div");
+    fill.className = `perf-fill perf-fill-${dotClass}`;
+    fill.style.width = `${pct}%`;
+    track.appendChild(fill);
+
+    row.append(head, track);
+    list.appendChild(row);
+  }
+
+  runsPerfBody.appendChild(list);
+}
+
+// ── Detail view tab switching ─────────────────────────────────────────────────
+function showDetailTab(tab) {
+  const isPerf = tab === "perf";
+  runsTabErrors.classList.toggle("active", !isPerf);
+  runsTabPerf.classList.toggle("active", isPerf);
+  runsBody.style.display        = isPerf ? "none" : "";
+  runsPerfBody.style.display    = isPerf ? ""     : "none";
+  runsPanelFooter.style.display = isPerf ? "none" : (currentRunErrors?.failed?.length || currentRunErrors?.skipped?.length ? "flex" : "none");
+  if (isPerf) renderPerfView();
+}
+
+runsTabErrors.addEventListener("click", () => showDetailTab("errors"));
+runsTabPerf.addEventListener("click",   () => showDetailTab("perf"));
+
 // ── Runs list ─────────────────────────────────────────────────────────────────
 function showRunsList(runs) {
   runsPanelTitle.textContent = "Recent Runs";
   runsBackBtn.classList.remove("show");
   runsPanelFooter.style.display = "none";
+  runsDetailTabs.style.display = "none";
+  runsBody.style.display = "";
+  runsPerfBody.style.display = "none";
   currentRunErrors = [];
+  _perfData = [];
   renderRunStats(runs);
 
   if (!runs.length) {
@@ -235,6 +332,7 @@ async function loadRunDetail(run) {
   const actions = result.run?.properties?.actions || {};
   const failed = [];
   const skipped = [];
+  _perfData = [];
 
   for (const [name, action] of Object.entries(actions)) {
     const s = action.status;
@@ -249,7 +347,19 @@ async function loadRunDetail(run) {
     } else if (s === "Skipped") {
       skipped.push({ name, status: s, reason: action.error?.message || "" });
     }
+    // Collect timing for every action for the performance view
+    const dur = (action.startTime && action.endTime)
+      ? Math.max(0, new Date(action.endTime) - new Date(action.startTime))
+      : null;
+    _perfData.push({ name, status: s || "Unknown", dur });
   }
+
+  // Show tab bar; reset to Errors tab
+  runsDetailTabs.style.display = "flex";
+  runsTabErrors.classList.add("active");
+  runsTabPerf.classList.remove("active");
+  runsBody.style.display = "";
+  runsPerfBody.style.display = "none";
 
   currentRunErrors = { displayName, runId, start, status, failed, skipped };
 

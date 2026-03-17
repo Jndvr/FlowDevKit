@@ -8,6 +8,7 @@
 // ── Panel imports (self-register via registerPanel on module load) ─────────────
 import "./panels/quick-copy.js";
 import "./panels/runs.js";
+import "./panels/env-vars.js";
 import "./panels/variables.js";
 import "./panels/expressions.js";
 import "./panels/lint.js";

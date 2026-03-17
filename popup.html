@@ -158,6 +158,10 @@
         <span class="panel-title" id="runsPanelTitle">Recent Runs</span>
         <button class="back-btn" id="runsBackBtn"><i class="bi bi-arrow-left"></i> back</button>
       </div>
+      <div class="runs-detail-tabs" id="runsDetailTabs">
+        <button class="runs-detail-tab active" id="runsTabErrors"><i class="bi bi-x-circle"></i> Errors</button>
+        <button class="runs-detail-tab" id="runsTabPerf"><i class="bi bi-speedometer2"></i> Performance</button>
+      </div>
       <div class="runs-stats-bar" id="runsStatsBar">
         <div class="runs-stat-summary">
           <span class="runs-stat-label" id="runsStatLabel"></span>
@@ -167,10 +171,31 @@
         <div class="runs-ratio" id="runsRatio"></div>
       </div>
       <div id="runsBody"><div class="runs-list" id="runsList"></div></div>
+      <div id="runsPerfBody" style="display:none"></div>
       <div class="panel-foot" id="runsPanelFooter" style="display:none">
         <span class="panel-meta" id="runsMeta"></span>
         <button class="panel-copy-btn" id="runsCopyBtn">Copy errors</button>
       </div>
+    </div>
+
+    <button class="tool-btn" id="envVarsBtn">
+      <div class="tool-btn-icon"><i class="bi bi-sliders"></i></div>
+      <div class="tool-btn-text">
+        <span class="tool-btn-title">Environment Variables</span>
+        <span class="tool-btn-desc">Browse Dataverse env vars &amp; copy references</span>
+      </div>
+      <i class="bi bi-chevron-right tool-btn-chevron"></i>
+    </button>
+    <div class="panel" id="envVarsPanel">
+      <div class="panel-header">
+        <span class="panel-title">Env Variables</span>
+        <span class="panel-meta" id="envVarsMeta"></span>
+      </div>
+      <div class="ev-search-bar">
+        <i class="bi bi-search search-icon"></i>
+        <input class="ev-search-input" id="envVarsSearch" placeholder="Filter variables…" autocomplete="off" spellcheck="false" aria-label="Filter environment variables" />
+      </div>
+      <div class="ev-list" id="envVarsList"></div>
     </div>
 
     <button class="tool-btn" id="exprBtn">

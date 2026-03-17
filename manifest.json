@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FlowDevKit",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Inspect, copy, and debug Power Automate flows directly from your browser.",
   "author": "Jan Düver",
   "icons": {
@@ -43,6 +43,7 @@
     "scripting",
     "clipboardWrite",
     "webNavigation",
+    "webRequest",
     "sidePanel",
     "storage"
   ],
@@ -57,6 +58,7 @@
     "https://*.environment.api.powerplatform.com/*",
     "https://api.powerplatform.com/*",
     "https://login.microsoftonline.com/*",
-    "https://api.bap.microsoft.com/*"
+    "https://api.bap.microsoft.com/*",
+    "https://*.dynamics.com/*"
   ]
 }

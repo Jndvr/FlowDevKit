@@ -15,13 +15,15 @@
 | **Quick Copy Action** | Search any action by name and copy just that action |
 | **Select Actions to Copy** | Multi-select actions for bulk copy — with dependency resolution on right-click |
 | **Copy Connection Refs** | Extract all connection reference keys from the flow |
-| **Failed Run Errors** | Browse recent run history, inspect failures, copy error details |
+| **Run History & Errors** | Browse recent runs, inspect failures, copy error messages and input/output detail |
+| **Action Performance View** | Switch to the Performance tab inside any run to see every action sorted by duration, with a proportional timing bar |
 | **Expression Inspector** | Scan and decode every Power FX / workflow expression in the flow |
 | **Copy Trigger** | Copy just the trigger configuration |
 | **Variable Tracker** | List all variables with their init values and usage locations |
+| **Environment Variables** | Browse all Dataverse environment variables for the current environment — see type, current value, schema name, and copy `@parameters('...')` references in one click |
 | **Analyze Flow** | Full best-practice audit with complexity, maintainability, and reliability scores |
 
-Fully works as a **popup** or docked as a **side panel** — switch between them with the sidebar button in the header.
+Fully works as a **popup** or docked as a **side panel** — switch with the sidebar button in the header.
 
 ---
 
@@ -37,7 +39,7 @@ Fully works as a **popup** or docked as a **side panel** — switch between them
 
 ### Keyboard Shortcut
 
-`Alt + Shift + F` opens FlowDevKit from any Power Automate tab.
+`Alt + Shift + F` opens FlowDevKit from any supported tab.
 
 ---
 
@@ -47,7 +49,7 @@ Fully works as a **popup** or docked as a **side panel** — switch between them
 2. Click the FlowDevKit icon (or press `Alt+Shift+F`)
 3. Use any of the tools — the flow is automatically detected from the active tab
 
-The extension calls the Power Automate API using your existing browser session cookies. **No credentials are stored or sent to any third party.**
+The extension calls the Power Automate and Dataverse APIs using your existing browser session tokens. **No credentials are stored or sent to any third party.**
 
 ---
 
@@ -86,6 +88,34 @@ For GCC, GovCloud, or sovereign clouds — enter your full API host in the **Cus
 |---|---|
 | **Definition only** | `triggers` + `actions` (lighter, portable) |
 | **Full export** | + `connectionReferences` (needed for full import) |
+
+---
+
+## Action Performance View
+
+Inside the **Run History** panel, open any run and use the **Performance** tab to see all actions ranked by execution time. Each row shows:
+
+- Colour-coded status dot (succeeded / failed / skipped)
+- Action name and duration in ms
+- A proportional fill bar relative to the slowest action in the run
+
+This lets you spot bottlenecks at a glance without leaving the browser.
+
+---
+
+## Environment Variables
+
+The **Environment Variables** panel queries the Dataverse OData API for `environmentvariabledefinition` records in your current environment. For each variable you see:
+
+- Display name and type badge (String / Number / Boolean / JSON / Data Source / Secret)
+- Schema name
+- Current value (masked for Secrets)
+- **`@`** button — copies `@parameters('schemaname')` to your clipboard, ready to paste into a flow expression
+- **Click any row** to expand and see the full value + a **Copy value** button
+
+Use the search bar to filter by display name, schema name, or description.
+
+> **Note:** The Environment Variables panel requires a Dataverse-scoped session token. FlowDevKit scans open browser tabs for this token automatically. If no token is found, an inline prompt directs you to open the Power Apps Tables page for your environment, which triggers the necessary authentication.
 
 ---
 
@@ -183,17 +213,20 @@ Additive risk points from:
 |---|---|
 | `activeTab` | Detect the currently open flow URL |
 | `tabs` | Scan tab frames to resolve flow context |
-| `scripting` | Execute API calls in the tab using the user's session |
+| `scripting` | Inject token-extraction scripts into the active tab |
 | `clipboardWrite` / `clipboardRead` | Copy and paste flow JSON |
-| `cookies` | Read session cookies for authenticated API calls |
+| `webRequest` | Passively capture Dataverse auth tokens from *.dynamics.com requests |
 | `webNavigation` | Track tab navigation for context refresh |
 | `sidePanel` | Enable the docked side panel mode |
 | `storage` | Persist user preferences (region, theme, format) |
 | `https://make.powerautomate.com/*` | Target site |
+| `https://make.powerapps.com/*` | Power Apps maker portal (token source for Dataverse) |
 | `https://*.api.flow.microsoft.com/*` | Power Automate REST API |
 | `https://*.environment.api.powerplatform.com/*` | Power Platform environment API |
+| `https://api.powerplatform.com/*` | Power Platform global API |
 | `https://login.microsoftonline.com/*` | Token handling |
-| `https://api.bap.microsoft.com/*` | BAP (Business Application Platform) API |
+| `https://api.bap.microsoft.com/*` | BAP — resolves Dataverse instance URL |
+| `https://*.dynamics.com/*` | Dataverse OData API (environment variables) |
 
 ---
 
@@ -210,27 +243,48 @@ FlowDevKit/
 │   ├── icon48.png
 │   └── icon128.png
 ├── background/
-│   ├── background.js       # Service worker
-│   ├── api-handlers.js     # API call routing
-│   └── fetch-utils.js      # Authenticated fetch helpers
+│   ├── background.js        # Service worker — message routing
+│   ├── api-handlers.js      # API call implementations
+│   ├── dv-token-cache.js    # Passive Dataverse token cache (webRequest)
+│   └── fetch-utils.js       # Authenticated fetch helpers
 ├── popup/
-│   ├── popup.js            # Main controller
-│   ├── context.js          # Flow context resolver
-│   ├── prefs.js            # User preferences (storage)
-│   ├── ui.js               # Shared UI helpers (toast, theme)
+│   ├── popup.js             # Main controller
+│   ├── context.js           # Flow context resolver
+│   ├── prefs.js             # User preferences (storage)
+│   ├── ui.js                # Shared UI helpers (toast, theme, panel registry)
 │   └── panels/
-│       ├── lint.js         # Analyze Flow — rules + metrics
-│       ├── runs.js         # Failed Run Errors
-│       ├── expressions.js  # Expression Inspector
-│       ├── variables.js    # Variable Tracker
-│       ├── picker.js       # Select Actions to Copy
-│       ├── paste.js        # Paste Actions into Flow
-│       └── quick-copy.js   # Quick Copy Action
+│       ├── lint.js          # Analyze Flow — rules + metrics
+│       ├── runs.js          # Run History, Errors & Performance View
+│       ├── env-vars.js      # Environment Variables panel
+│       ├── expressions.js   # Expression Inspector
+│       ├── variables.js     # Variable Tracker
+│       ├── picker.js        # Select Actions to Copy
+│       ├── paste.js         # Paste Actions into Flow (coming soon)
+│       └── quick-copy.js    # Quick Copy Action
 └── shared/
-    ├── styles.css          # All UI styles (light + dark theme)
-    ├── flow-utils.js       # Flow parsing utilities (flattenActions, etc.)
-    └── constants.js        # Region map and shared constants
+    ├── styles.css           # All UI styles (light + dark theme)
+    ├── flow-utils.js        # Flow parsing utilities (flattenActions, etc.)
+    └── constants.js         # Region map and shared constants
 ```
+
+---
+
+## Changelog
+
+### v1.2.0
+- **New: Action Performance View** — Performance tab inside any run detail; actions ranked by duration with proportional timing bars
+- **New: Environment Variables panel** — browse, search, and copy Dataverse environment variable references and values
+- Improved Dataverse token acquisition: JWT audience-aware scanner handles both `org.crm4.dynamics.com` and `org.api.crm4.dynamics.com` endpoints
+- Fixed `$expand` navigation property name for `environmentvariabledefinition` OData queries
+
+### v1.1.0
+- Side panel mode
+- Variable Tracker panel
+- Analyze Flow — 35 lint rules + 3 scoring dimensions
+- Expression Inspector improvements
+
+### v1.0.0
+- Initial release
 
 ---
 

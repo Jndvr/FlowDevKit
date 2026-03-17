@@ -20,7 +20,6 @@ export function getApiHost() {
     if (/^[a-z0-9]([a-z0-9.\-]*[a-z0-9])?$/i.test(stripped) && stripped.includes(".")) {
       return stripped;
     }
-    console.warn("[FlowKit] Custom host is not a valid hostname, ignoring:", custom);
   }
   return REGION_HOSTS[getRegion()] || REGION_HOSTS.emea;
 }
@@ -334,8 +333,7 @@ export async function resolveFlowContext() {
   let allFrames = [];
   try {
     allFrames = await chrome.webNavigation.getAllFrames({ tabId: resolvedTab.id }) || [];
-  } catch (e) {
-    console.warn("[FlowKit] webNavigation.getAllFrames failed:", e.message);
+  } catch {
     allFrames = [{ frameId: 0, url: resolvedTab.url }];
   }
 
@@ -358,9 +356,6 @@ export async function resolveFlowContext() {
     const isKnownPage = isFlowListPage || isSolutionPage;
     // Only warn when on a Power Platform domain — unrelated tabs (tally.so, google.com, etc.) are silently ignored
     const isPowerPlatformDomain = /powerautomate\.com|powerapps\.com|copilotstudio\.(microsoft|preview)/i.test(allUrls);
-    if (!isKnownPage && isPowerPlatformDomain) {
-      console.warn("[FlowKit] No matching frame. All frame URLs:", allFrames.map(f => f.url).join(", "));
-    }
     let hint;
     if (isSolutionPage) {
       hint = "You're on the Solutions page — open a specific flow first (click its name to open the detail view).";
@@ -390,7 +385,7 @@ export async function resolveFlowContext() {
       const hints = nameResult?.[0]?.result || [];
       const skip = /^(copilot studio|microsoft|cloud flows|objects|solutions|environments|all|agents|apps|cards|tables|new|edit|save|undo|redo|export|delete)$/i;
       flowNameHint = hints.find(h => h && !skip.test(h.trim()) && h.length > 2) || null;
-    } catch (e) { console.warn("[FlowKit] Name hint extraction failed:", e.message); }
+    } catch { }
   }
 
   let token = null; let tokens = []; let scrapedFlowId = null;
@@ -413,12 +408,9 @@ export async function resolveFlowContext() {
         for (const t of (r.tokens || [])) {
           if (!tokens.includes(t)) tokens.push(t);
         }
-        if (!scrapedFlowId && r._debug) {
-          console.warn("[FlowKit] Flow ID scrape failed (frame). Debug:", JSON.stringify(r._debug, null, 2));
-        }
       }
     }
-  } catch (e) { console.warn("Token extraction skipped:", e.message); }
+  } catch { }
 
   let { environmentId, flowId } = parsed;
 
@@ -453,11 +445,10 @@ export async function resolveFlowContext() {
             return name === hint || name.includes(hint) || hint.includes(name);
           });
           if (match) flowId = match.name;
-          else console.warn("[FlowKit] No name match. Available:", resp.flows.map(f => f.properties?.displayName));
         }
         if (!flowId && resp.flows.length === 1) flowId = resp.flows[0].name;
       }
-    } catch (e) { console.warn("[FlowKit] Flow list lookup failed:", e.message); }
+    } catch { }
   }
 
   if (!flowId) {

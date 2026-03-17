@@ -546,9 +546,7 @@ async function executePaste(selectId, hasWarnings) {
         if (r?.ok && r.connectionName) {
           resolvedConnections[connectorKey] = { connectionName: r.connectionName, connectionId: r.connectionId || "" };
         }
-      } catch (e) {
-        console.warn("[FlowDevKit] Connection lookup failed for", connectorKey, e.message);
-      }
+      } catch { }
     }));
   }
 

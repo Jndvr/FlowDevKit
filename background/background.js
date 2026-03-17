@@ -1,6 +1,10 @@
 /**
  * background/background.js — Service Worker (Manifest V3, ES module)
  */
+// Must be imported before any async work so the webRequest listener is
+// registered synchronously at service-worker boot time.
+import "./dv-token-cache.js";
+
 import {
   handleFetchFlowList,
   handleFetchFlow,
@@ -10,6 +14,7 @@ import {
   handleFetchRunDetail,
   handleFetchRunIO,
   handleFetchConnections,
+  handleFetchEnvVars,
 } from "./api-handlers.js";
 import { getLog } from "./debug-log.js";
 
@@ -63,6 +68,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "FETCH_FLOW")     { handleFetchFlow(message, sendResponse);     return true; }
   if (message.type === "FETCH_ENV")      { handleFetchEnv(message, sendResponse);      return true; }
   if (message.type === "FETCH_CONNECTIONS") { handleFetchConnections(message, sendResponse); return true; }
+  if (message.type === "FETCH_ENV_VARS")    { handleFetchEnvVars(message, sendResponse);    return true; }
   if (message.type === "PATCH_FLOW")     { handlePatchFlow(message, sendResponse);     return true; }
   if (message.type === "FETCH_RUNS")     { handleFetchRuns(message, sendResponse);     return true; }
   if (message.type === "FETCH_RUN_DETAIL") { handleFetchRunDetail(message, sendResponse); return true; }
