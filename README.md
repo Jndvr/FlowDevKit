@@ -15,12 +15,12 @@
 | **Quick Copy Action** | Search any action by name and copy just that action |
 | **Select Actions to Copy** | Multi-select actions for bulk copy — with dependency resolution on right-click |
 | **Copy Connection Refs** | Extract all connection reference keys from the flow |
-| **Run History & Errors** | Browse recent runs, inspect failures, copy error messages and input/output detail |
-| **Action Performance View** | Switch to the Performance tab inside any run to see every action sorted by duration, with a proportional timing bar |
-| **Expression Inspector** | Scan and decode every Power FX / workflow expression in the flow |
 | **Copy Trigger** | Copy just the trigger configuration |
+| **Run History & Errors** | Browse recent runs, inspect failures, copy error messages and input/output detail |
+| **Action Performance View** | Switch to the Performance tab inside any run to see every action sorted by duration with a proportional timing bar |
+| **Expression Inspector** | Scan and decode every Power FX / workflow expression in the flow |
 | **Variable Tracker** | List all variables with their init values and usage locations |
-| **Environment Variables** | Browse all Dataverse environment variables for the current environment — see type, current value, schema name, and copy `@parameters('...')` references in one click |
+| **Environment Variables** | Browse all Dataverse environment variables — see type, current value, schema name, and copy `@parameters('...')` references in one click |
 | **Analyze Flow** | Full best-practice audit with complexity, maintainability, and reliability scores |
 
 Fully works as a **popup** or docked as a **side panel** — switch with the sidebar button in the header.
@@ -65,7 +65,7 @@ https://copilotstudio.microsoft.com/…       (Copilot Studio)
 
 ## Settings
 
-Click the **gear icon** in the header to access settings.
+Click the **gear icon** in the header to open settings.
 
 ### Region
 
@@ -86,44 +86,192 @@ For GCC, GovCloud, or sovereign clouds — enter your full API host in the **Cus
 
 | Mode | What's included |
 |---|---|
-| **Definition only** | `triggers` + `actions` (lighter, portable) |
-| **Full export** | + `connectionReferences` (needed for full import) |
+| **Definition only** | `triggers` + `actions` — lighter and portable |
+| **Full export** | + `connectionReferences` — needed when importing into another environment |
 
 ---
 
-## Action Performance View
-
-Inside the **Run History** panel, open any run and use the **Performance** tab to see all actions ranked by execution time. Each row shows:
-
-- Colour-coded status dot (succeeded / failed / skipped)
-- Action name and duration in ms
-- A proportional fill bar relative to the slowest action in the run
-
-This lets you spot bottlenecks at a glance without leaving the browser.
+## Tools — Detailed Reference
 
 ---
 
-## Environment Variables
+### Copy JSON
 
-The **Environment Variables** panel queries the Dataverse OData API for `environmentvariabledefinition` records in your current environment. For each variable you see:
+Copies the complete flow definition to your clipboard. What gets copied depends on the **Export Format** setting:
 
-- Display name and type badge (String / Number / Boolean / JSON / Data Source / Secret)
-- Schema name
-- Current value (masked for Secrets)
-- **`@`** button — copies `@parameters('schemaname')` to your clipboard, ready to paste into a flow expression
-- **Click any row** to expand and see the full value + a **Copy value** button
+- **Definition only** — includes `triggers` and `actions` only (most common use case — paste into another flow or share with a colleague)
+- **Full export** — also includes `connectionReferences` (required when the recipient needs to re-map connections in a different environment)
 
-Use the search bar to filter by display name, schema name, or description.
-
-> **Note:** The Environment Variables panel requires a Dataverse-scoped session token. FlowDevKit scans open browser tabs for this token automatically. If no token is found, an inline prompt directs you to open the Power Apps Tables page for your environment, which triggers the necessary authentication.
+After copying, a toast confirms how many actions and the trigger name were included.
 
 ---
 
-## Analyze Flow — Scores & Rules
+### Export JSON
 
-The **Analyze Flow** panel runs 35 best-practice checks and computes three scores shown at the top.
+Downloads the flow as a `.json` file to your computer. The filename is auto-generated from the flow name and timestamp. Uses the same **Export Format** setting as Copy JSON.
 
-### Complexity Score (Cyclomatic Complexity)
+Useful for keeping a local backup, doing a diff between versions, or loading the flow into an external tool.
+
+---
+
+### Copy Trigger
+
+Copies only the trigger configuration block — the `triggers` object — as JSON. Everything about how the flow starts: trigger type, inputs, conditions, recurrence settings, and split-on configuration.
+
+Use this when you need to replicate a trigger in a new flow without copying the entire definition.
+
+---
+
+### Copy Connection Refs
+
+Extracts all `connectionReferences` defined in the flow and copies them to the clipboard.
+
+Each reference includes:
+- Connection name
+- Connector ID and display name
+- Connection ID
+
+If any connection reference is missing a connection ID — a common issue in exported / imported flows — a warning is shown listing the incomplete references.
+
+---
+
+### Quick Copy Action
+
+A search-as-you-type panel for copying a single action.
+
+1. Type part of the action name or type — results appear immediately (up to 20 matches)
+2. Each result shows the action name and a human-readable type label
+3. Click the **copy** button on any result
+
+What gets copied is a complete, portable "action envelope": the action definition with all inputs, run-after configuration, and the connection references it depends on. Authentication placeholders are normalised to `@parameters('$authentication')` so the copied action can be pasted directly into a different flow.
+
+---
+
+### Select Actions to Copy
+
+A multi-select panel for bulk-copying groups of actions.
+
+**The list:**
+- All actions are shown in execution order with depth-based indentation
+- Checkboxes let you include or exclude individual actions
+- Container actions (If, Switch, Apply to each, Scope) are labelled with *incl. children* — selecting them automatically selects everything nested inside
+- Parallel branches are indicated with a *Parallel* badge
+- Each row shows the action type and any run-after dependency status badges
+
+**Selection shortcuts:**
+- **Toggle All** — select or deselect everything in one click
+- **Right-click any action** — selects that action and its entire dependency chain (all actions it transitively depends on), then flashes the row to confirm
+
+**Search:** Filter the list by action name, type, or input configuration.
+
+**Copy Selection:** Exports only the checked actions as JSON, including the connection references they use. If any referenced connector is missing its connection ID, a warning lists the incomplete entries.
+
+---
+
+### Run History & Errors
+
+Fetches the 15 most recent run records and displays them in a scannable list.
+
+**List view:**
+
+At the top, a stats bar shows:
+- Success, failed, running, and cancelled counts
+- A mini pie chart of the pass/fail ratio
+- A sparkline of run durations with a trend label (↑ Trending slower, ↓ Trending faster, → Stable)
+- Pass rate as a percentage
+
+Each run row shows:
+- A colour-coded status dot (green = succeeded, red = failed, grey = cancelled, blue = running)
+- Start time — formatted as *today HH:MM*, *yesterday HH:MM*, or *MMM D HH:MM*
+- Duration
+- Status badge
+
+**Detail view (click any run):**
+
+Two tabs appear at the top of the detail pane.
+
+**Errors tab** — shows every action that failed or was skipped:
+- Error code and full error message for failed actions
+- Skip reason for skipped actions
+- *Show inputs* / *Show outputs* buttons that load the raw action data on demand (to avoid fetching large payloads upfront)
+- A copy button next to inputs/outputs to copy the raw JSON
+- A **Copy all errors** button at the bottom that exports a formatted plain-text summary of all failures — ready to paste into a support ticket or bug report
+
+**Performance tab** — shows every action in the run, sorted by duration descending:
+- A summary line: total tracked time and action count
+- Each row: status dot, action name, duration in ms, and a proportional fill bar relative to the slowest action
+- Makes bottlenecks immediately visible without opening the flow designer
+
+Click the back arrow to return to the run list.
+
+---
+
+### Expression Inspector
+
+Scans the entire flow definition and extracts every Power FX / workflow expression — anything inside `@{...}` — from action inputs, conditions, parameters, and outputs.
+
+**How it works:**
+- Click **Scan** to fetch the flow and index all expressions
+- Results are grouped by action, with a count badge per action
+- Click an action group to expand or collapse it
+- Each expression shows the field name it came from and the full expression text
+- A **copy** button on each expression copies that single expression
+- **Copy all** exports the complete index as a JSON array with action name, field, and expression value
+
+**Search:** Filter by expression text, field name, or action name. Updates in real time.
+
+Handles nested braces correctly — `@{if(contains('{a}', 'x'), '...', '...')}` is parsed as a single expression, not split at the inner brace.
+
+---
+
+### Variable Tracker
+
+Lists every variable in the flow — where it is initialised, what type it is, and where it gets changed.
+
+**Initialised variables:**
+Each `Initialize variable` action is shown with:
+- Variable name
+- Type badge (String, Integer, Boolean, Array, Object, Float) with colour coding
+- Initial value — long values and JSON objects are formatted for readability
+
+**Set operations:**
+Each `Set variable` action is shown with:
+- Variable name
+- The action that sets it and the new value
+
+**Copy all** exports the initialised variables as a JSON array with `name`, `type`, and `initialValue`.
+
+Recursively walks all nesting levels: variables defined inside conditions, loops, switch branches, or scopes are all captured.
+
+---
+
+### Environment Variables
+
+Queries the Dataverse OData API for all `environmentvariabledefinition` records in the current Power Platform environment.
+
+**For each variable:**
+- Display name
+- Type badge — **String**, **Number**, **Boolean**, **JSON**, **Data Source**, or **Secret** — each with a distinct colour
+- Schema name in monospace
+- Current value (or default value if no override is set) — truncated to 64 characters in the list view; Secrets are always masked as `••••••`
+
+**Interactions:**
+- Click the **`@`** button — copies `@parameters('schemaname')` to your clipboard. Paste directly into a flow expression to reference the variable without typing the schema name manually.
+- **Click any row** — expands it to show the full untruncated value in a scrollable monospace block, plus a **Copy value** button
+
+**Search:** Filters by display name, schema name, or description text.
+
+**Authentication note:** Dataverse requires a separate session token from the main Power Automate token. FlowDevKit tries to acquire it automatically by scanning open browser tabs. If none is found, an inline prompt appears with a button that opens the Power Apps Tables page for your environment — loading that page acquires the token, after which you can retry.
+
+---
+
+### Analyze Flow
+
+Runs 35 best-practice lint rules against the flow definition and computes three quality scores.
+
+**Three scores shown at the top:**
+
+**Complexity** — Cyclomatic Complexity (CC):
 
 ```
 CC = 1 + conditions + loops + switch cases
@@ -136,21 +284,17 @@ CC = 1 + conditions + loops + switch cases
 | ≤ 25 | High |
 | > 25 | Very High |
 
-### Maintainability Score (0–100)
-
-Starts at 100, deducted for:
-- Default action names (`Copy_of_…`, `Action_1`, etc.)
-- Duplicate long expressions repeated across 4+ actions
+**Maintainability** (0–100, higher is better) — starts at 100, deducted for:
+- Default / auto-generated action names
+- Duplicate long expressions used across 4+ actions
 - Deeply nested conditions (depth > 3)
 - Large flows (50+ actions)
 - Unused variables
 - Missing flow description
 
-### Reliability Risk (0–100+, lower is better)
-
-Additive risk points from:
-- Parallel branch race conditions
-- Error masking (terminate + continue-on-error together)
+**Reliability Risk** (0–100+, lower is better) — additive risk score from:
+- Parallel branch race conditions (shared variable writes)
+- Error masking (Terminate + Continue-on-error together)
 - Secrets hardcoded in expressions
 - Broken or missing connection references
 - Unhandled HTTP responses
@@ -160,10 +304,12 @@ Additive risk points from:
 - Legacy / deprecated connectors
 - Potential runaway loops
 
-### Lint Rules (35 total)
+**Lint findings list:**
+
+Each finding shows a severity icon, rule name, and the action it refers to. Findings are colour-coded by severity.
 
 <details>
-<summary>Show all rules</summary>
+<summary>All 35 rules</summary>
 
 | # | Severity | Rule |
 |---|---|---|
