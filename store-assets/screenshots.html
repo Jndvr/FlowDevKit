@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FlowDevKit — Store Screenshots</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+}
+
+/* ── Each screenshot is exactly 1280×800 ── */
+.shot {
+  width: 1280px; height: 800px;
+  display: flex; flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Browser chrome bar ── */
+.browser-bar {
+  background: #1e1f26;
+  height: 44px;
+  display: flex; align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  border-bottom: 1px solid #2a2b35;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.browser-dots { display:flex; gap:6px; }
+.browser-dots span {
+  width:12px; height:12px; border-radius:50%;
+}
+.browser-dots span:nth-child(1) { background:#ff5f57; }
+.browser-dots span:nth-child(2) { background:#febc2e; }
+.browser-dots span:nth-child(3) { background:#28c840; }
+
+.browser-url {
+  flex:1; background:#2a2b35; border-radius:6px;
+  height:26px; display:flex; align-items:center;
+  padding:0 12px; gap:6px; max-width:480px; margin:0 auto;
+}
+.browser-url .lock { color:#4ade80; font-size:10px; }
+.browser-url .url-text { font-size:11px; color:#9099b8; font-family:ui-monospace,"Cascadia Code",Consolas,monospace; }
+
+.browser-ext {
+  width:28px; height:28px; border-radius:6px;
+  background: linear-gradient(135deg,#4f8ef7,#2563eb);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:800; color:#fff; letter-spacing:-0.5px;
+}
+
+/* ── Main content area ── */
+.browser-content {
+  flex:1; display:flex; overflow:hidden;
+}
+
+/* ── PA page (left) ── */
+.pa-page {
+  flex:1; background:#f8f9fc; position:relative; overflow:hidden;
+}
+
+/* fake PA top bar */
+.pa-topbar {
+  height:48px; background:#fff;
+  border-bottom:1px solid #e5e7eb;
+  display:flex; align-items:center;
+  padding:0 20px; gap:12px;
+}
+.pa-logo { color:#742774; font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; }
+.pa-logo svg { width:18px; height:18px; }
+.pa-flow-name { font-size:13px; font-weight:600; color:#111; margin-left:16px; }
+.pa-breadcrumb { font-size:11px; color:#888; margin-left:4px; }
+.pa-top-actions { margin-left:auto; display:flex; gap:8px; align-items:center; }
+.pa-btn { padding:5px 14px; border-radius:4px; font-size:12px; font-weight:600; border:1px solid #d1d5db; background:#fff; color:#374151; cursor:pointer; }
+.pa-btn.primary { background:#0078d4; color:#fff; border-color:#0078d4; }
+
+/* flow canvas */
+.pa-canvas {
+  padding:32px 0 0 80px;
+  display:flex; flex-direction:column; align-items:flex-start;
+  gap:0;
+}
+
+.flow-connector {
+  width:2px; height:28px; background:#d1d5db; margin-left:19px;
+}
+
+.flow-action {
+  display:flex; align-items:center; gap:0;
+  width:320px;
+}
+
+.flow-action-inner {
+  flex:1; border:1px solid #d1d5db; border-radius:4px;
+  background:#fff; height:48px;
+  display:flex; align-items:center; gap:10px;
+  padding:0 12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.07);
+}
+
+.flow-icon {
+  width:28px; height:28px; border-radius:3px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; flex-shrink:0;
+}
+
+.flow-action-name { font-size:12px; font-weight:500; color:#111; }
+.flow-action-type { font-size:10px; color:#888; margin-top:1px; }
+.flow-action-menu { margin-left:auto; color:#aaa; font-size:18px; }
+
+/* ── Extension panel (right) ── */
+.ext-panel {
+  width: 380px;
+  flex-shrink: 0;
+  background: #f5f6fa;
+  border-left: 1px solid #e2e4ed;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* dark theme variant */
+.ext-panel.dark {
+  background: #111318;
+  border-left-color: #1e2030;
+}
+
+/* panel header */
+.ext-header {
+  padding: 14px 16px 0;
+  background: #f5f6fa;
+  flex-shrink: 0;
+}
+.ext-panel.dark .ext-header { background:#111318; }
+
+.ext-flow-card {
+  background:#fff; border:1px solid #e2e4ed; border-radius:8px;
+  padding:10px 13px; display:flex; align-items:center; gap:10px;
+  margin-bottom:12px;
+}
+.ext-panel.dark .ext-flow-card { background:#1a1d27; border-color:#252840; }
+
+.ext-flow-icon {
+  width:32px; height:32px; border-radius:6px;
+  background:linear-gradient(135deg,#742774,#9b2c9b);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+.ext-flow-name { font-size:12.5px; font-weight:700; color:#111; }
+.ext-panel.dark .ext-flow-name { color:#e8eaf0; }
+.ext-env { font-size:10px; color:#888; display:flex; align-items:center; gap:4px; margin-top:2px; }
+.ext-env-dot { width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0; }
+.ext-panel.dark .ext-env { color:#5a6080; }
+
+.ext-copy-row {
+  display:flex; gap:8px; margin-bottom:14px;
+}
+.ext-copy-btn {
+  flex:1; height:36px; border-radius:8px;
+  border:none; font-size:12px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  cursor:pointer;
+}
+.ext-copy-btn.primary { background:#3b7ef5; color:#fff; }
+.ext-copy-btn.secondary { background:#fff; border:1px solid #dde0ed; color:#444; }
+.ext-panel.dark .ext-copy-btn.secondary { background:#1a1d27; border-color:#252840; color:#9099c0; }
+
+.ext-section-label {
+  font-size:9.5px; font-weight:700; letter-spacing:0.09em;
+  text-transform:uppercase; color:#aab; margin-bottom:8px;
+}
+.ext-panel.dark .ext-section-label { color:#3a4060; }
+
+/* tool rows */
+.ext-tools { display:flex; flex-direction:column; gap:0; overflow-y:auto; flex:1; padding:0 16px 16px; }
+
+.tool-row {
+  display:flex; align-items:center; gap:12px;
+  padding:11px 12px; border-radius:8px; cursor:pointer;
+  border:1px solid transparent;
+  transition:all 0.15s;
+}
+.tool-row:hover, .tool-row.active {
+  background:#fff; border-color:#e2e4ed;
+}
+.ext-panel.dark .tool-row:hover,
+.ext-panel.dark .tool-row.active {
+  background:#1a1d27; border-color:#252840;
+}
+.tool-row.active .tool-row-title { color:#3b7ef5; }
+
+.tool-icon {
+  width:30px; height:30px; border-radius:6px;
+  background:#f0f1f8; display:flex; align-items:center; justify-content:center;
+  font-size:13px; flex-shrink:0;
+}
+.ext-panel.dark .tool-icon { background:#1e2130; }
+.tool-row.active .tool-icon { background:#ebf0fd; }
+.ext-panel.dark .tool-row.active .tool-icon { background:#1a2545; }
+
+.tool-row-text { flex:1; min-width:0; }
+.tool-row-title { font-size:12.5px; font-weight:600; color:#1a1d2e; }
+.ext-panel.dark .tool-row-title { color:#c8ccde; }
+.tool-row-desc { font-size:10.5px; color:#8898bb; margin-top:1px; }
+.tool-row-chevron { color:#ccc; font-size:14px; }
+
+/* ── Run history panel ── */
+.runs-stats {
+  background:#fff; border:1px solid #e2e4ed; border-radius:8px;
+  padding:12px 14px; margin:0 16px 10px;
+}
+.ext-panel.dark .runs-stats { background:#1a1d27; border-color:#252840; }
+
+.stats-row { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.stat-badge {
+  font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;
+}
+.stat-badge.green { background:#dcfce7; color:#16a34a; }
+.stat-badge.red   { background:#fee2e2; color:#dc2626; }
+.stat-trend { margin-left:auto; font-size:10px; color:#888; font-family:monospace; }
+
+.sparkline { display:flex; align-items:flex-end; gap:3px; height:32px; margin-bottom:6px; }
+.spark-bar {
+  flex:1; border-radius:2px 2px 0 0; min-height:4px;
+  background:#22c55e;
+}
+.spark-bar.fail { background:#ef4444; }
+
+.pass-rate { font-size:10px; color:#888; text-align:right; }
+.pass-rate strong { color:#22c55e; }
+
+.run-list { display:flex; flex-direction:column; gap:0; overflow-y:auto; flex:1; }
+.run-row {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 16px; border-bottom:1px solid #f0f1f8; cursor:pointer;
+}
+.ext-panel.dark .run-row { border-bottom-color:#1a1d27; }
+.run-row:hover { background:#fafbff; }
+.ext-panel.dark .run-row:hover { background:#14172000; }
+
+.run-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:1px; }
+.run-dot.green { background:#22c55e; }
+.run-dot.red   { background:#ef4444; }
+
+.run-time { font-size:11px; color:#555; }
+.ext-panel.dark .run-time { color:#6070a0; }
+.run-dur  { font-size:10px; color:#aaa; margin-top:1px; }
+
+.run-badge {
+  margin-left:auto; font-size:10px; font-weight:700;
+  padding:2px 9px; border-radius:10px;
+}
+.run-badge.green { background:#dcfce7; color:#16a34a; }
+.run-badge.red   { background:#fee2e2; color:#dc2626; }
+
+/* ── Picker panel ── */
+.picker-search-bar {
+  margin:0 16px 8px; display:flex; align-items:center;
+  background:#fff; border:1px solid #e2e4ed; border-radius:8px;
+  padding:0 12px; gap:8px; height:34px;
+}
+.ext-panel.dark .picker-search-bar { background:#1a1d27; border-color:#252840; }
+.picker-search-bar input { border:none; background:transparent; font-size:11.5px; color:#333; outline:none; flex:1; font-family:ui-monospace,monospace; }
+.ext-panel.dark .picker-search-bar input { color:#8090c0; }
+.picker-hint { font-size:10px; color:#aab; padding:4px 16px 6px; font-style:italic; }
+
+.picker-list { display:flex; flex-direction:column; overflow-y:auto; flex:1; }
+.picker-row {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 16px; border-bottom:1px solid #f2f3f8; cursor:pointer;
+}
+.ext-panel.dark .picker-row { border-bottom-color:#1a1d27; }
+.picker-row:hover { background:#f8f9ff; }
+.ext-panel.dark .picker-row:hover { background:#141720; }
+
+.picker-cb {
+  width:14px; height:14px; border-radius:3px;
+  background:#3b7ef5; border:1px solid #3b7ef5;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.picker-cb.unchecked { background:#fff; border-color:#d1d5db; }
+.ext-panel.dark .picker-cb.unchecked { background:#1a1d27; border-color:#353a5a; }
+.picker-cb::after { content:"✓"; color:#fff; font-size:9px; font-weight:900; }
+.picker-cb.unchecked::after { display:none; }
+
+.picker-name { font-size:11.5px; color:#111; font-family:ui-monospace,monospace; }
+.ext-panel.dark .picker-name { color:#8090c0; }
+.picker-type-badge {
+  margin-left:auto; font-size:9px; font-weight:700;
+  padding:2px 7px; border-radius:8px; flex-shrink:0;
+}
+.picker-type-badge.http      { background:#dbeafe; color:#1d4ed8; }
+.picker-type-badge.parse     { background:#f3e8ff; color:#7c3aed; }
+.picker-type-badge.ai        { background:#fef3c7; color:#92400e; }
+.picker-type-badge.manual    { background:#f0fdf4; color:#166534; }
+.picker-type-badge.succeeded { background:#dcfce7; color:#15803d; }
+
+.picker-footer {
+  padding:10px 16px; border-top:1px solid #e2e4ed;
+  display:flex; align-items:center;
+  flex-shrink:0;
+}
+.ext-panel.dark .picker-footer { border-top-color:#252840; }
+.picker-count { font-size:11px; color:#888; }
+.picker-copy-btn {
+  margin-left:auto; background:#3b7ef5; color:#fff;
+  border:none; border-radius:8px; padding:7px 18px;
+  font-size:12px; font-weight:700; cursor:pointer;
+}
+
+/* ── Lint panel ── */
+.lint-scores {
+  display:flex; gap:8px; margin:0 16px 12px; flex-shrink:0;
+}
+.score-card {
+  flex:1; background:#fff; border:1px solid #e2e4ed; border-radius:8px;
+  padding:10px 10px 9px; text-align:center;
+}
+.ext-panel.dark .score-card { background:#1a1d27; border-color:#252840; }
+.score-label { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:#aab; font-weight:700; margin-bottom:4px; }
+.score-val   { font-size:20px; font-weight:800; }
+.score-val.green  { color:#22c55e; }
+.score-val.yellow { color:#f59e0b; }
+.score-val.red    { color:#ef4444; }
+.score-sub { font-size:9px; color:#aab; margin-top:2px; }
+
+.lint-list { overflow-y:auto; flex:1; display:flex; flex-direction:column; }
+.lint-row {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:8px 16px; border-bottom:1px solid #f2f3f8;
+}
+.ext-panel.dark .lint-row { border-bottom-color:#1a1d27; }
+.lint-sev { font-size:13px; flex-shrink:0; margin-top:1px; }
+.lint-rule { font-size:11.5px; font-weight:600; color:#1a1d2e; }
+.ext-panel.dark .lint-rule { color:#c0c8e0; }
+.lint-action { font-size:10px; color:#8898bb; margin-top:2px; font-family:ui-monospace,monospace; }
+
+/* ── Caption overlay ── */
+.caption {
+  position:absolute; bottom:24px; left:32px; right:412px;
+  background:rgba(15,17,25,0.82);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(79,142,247,0.25);
+  border-radius:10px;
+  padding:14px 18px;
+  pointer-events:none;
+}
+.caption-title { font-size:15px; font-weight:800; color:#fff; margin-bottom:4px; }
+.caption-body  { font-size:11.5px; color:#8090b8; line-height:1.5; }
+
+/* gradient for dark screens */
+.shot.dark-shot { background:#0c0e14; }
+.shot.dark-shot .pa-page { background:#0c0e14; }
+
+/* ── perf tab ── */
+.perf-summary { font-size:10px; color:#8898bb; padding:8px 16px 6px; flex-shrink:0; }
+.perf-list { overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:0; }
+.perf-row {
+  padding:7px 16px;
+  border-bottom:1px solid #f2f3f8;
+}
+.ext-panel.dark .perf-row { border-bottom-color:#1a1d27; }
+.perf-row-head { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+.perf-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+.perf-dot.green { background:#22c55e; }
+.perf-dot.red   { background:#ef4444; }
+.perf-name { font-size:11px; color:#333; font-family:ui-monospace,monospace; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ext-panel.dark .perf-name { color:#8090c0; }
+.perf-dur  { font-size:10.5px; font-weight:700; color:#555; flex-shrink:0; }
+.ext-panel.dark .perf-dur { color:#c0c8e0; }
+.perf-track { height:4px; border-radius:2px; background:#f0f1f8; overflow:hidden; }
+.ext-panel.dark .perf-track { background:#1e2130; }
+.perf-fill { height:100%; border-radius:2px; }
+.perf-fill.green { background:#22c55e; }
+.perf-fill.yellow { background:#f59e0b; }
+.perf-fill.red { background:#ef4444; }
+
+/* detail tab bar */
+.detail-tabs {
+  display:flex; gap:0; border-bottom:1px solid #e2e4ed;
+  margin:0 16px 8px; flex-shrink:0;
+}
+.ext-panel.dark .detail-tabs { border-bottom-color:#252840; }
+.detail-tab {
+  flex:1; padding:8px; text-align:center; font-size:11px; font-weight:600;
+  color:#888; cursor:pointer; border-bottom:2px solid transparent;
+}
+.detail-tab.active { color:#3b7ef5; border-bottom-color:#3b7ef5; }
+
+/* back btn */
+.back-btn {
+  display:flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:600; color:#3b7ef5;
+  padding:8px 16px; cursor:pointer; flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SCREENSHOT 1: Overview — all tools listed, light theme
+═══════════════════════════════════════════════════════════════════ -->
+<div class="shot" id="shot-overview">
+  <div class="browser-bar">
+    <div class="browser-dots"><span></span><span></span><span></span></div>
+    <div class="browser-url">
+      <span class="lock">🔒</span>
+      <span class="url-text">make.powerautomate.com/environments/…/flows/…</span>
+    </div>
+    <div class="browser-ext">F</div>
+  </div>
+  <div class="browser-content">
+    <!-- PA page -->
+    <div class="pa-page">
+      <div class="pa-topbar">
+        <div class="pa-logo">
+          <svg viewBox="0 0 18 18" fill="none"><path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#742774"/></svg>
+          Power Automate
+        </div>
+        <div class="pa-flow-name">JiraGraphTest</div>
+        <div class="pa-breadcrumb">· My flows</div>
+        <div class="pa-top-actions">
+          <button class="pa-btn">Save</button>
+          <button class="pa-btn primary">Test</button>
+        </div>
+      </div>
+      <div class="pa-canvas">
+        <div class="flow-action">
+          <div class="flow-action-inner">
+            <div class="flow-icon" style="background:#e8f4fd">🖐</div>
+            <div><div class="flow-action-name">Manually trigger a flow</div><div class="flow-action-type">Trigger</div></div>
+            <div class="flow-action-menu">···</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-action">
+          <div class="flow-action-inner">
+            <div class="flow-icon" style="background:#e8f8ef">🌐</div>
+            <div><div class="flow-action-name">HTTP</div><div class="flow-action-type">HTTP</div></div>
+            <div class="flow-action-menu">···</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-action">
+          <div class="flow-action-inner">
+            <div class="flow-icon" style="background:#f3e8ff">⚙️</div>
+            <div><div class="flow-action-name">Parse JSON – Access Token</div><div class="flow-action-type">Data Operation</div></div>
+            <div class="flow-action-menu">···</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-action">
+          <div class="flow-action-inner">
+            <div class="flow-icon" style="background:#e8f8ef">🌐</div>
+            <div><div class="flow-action-name">HTTP 2</div><div class="flow-action-type">HTTP</div></div>
+            <div class="flow-action-menu">···</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-action">
+          <div class="flow-action-inner">
+            <div class="flow-icon" style="background:#fef9e7">🤖</div>
+            <div><div class="flow-action-name">Run a prompt</div><div class="flow-action-type">AI Builder</div></div>
+            <div class="flow-action-menu">···</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extension panel -->
+    <div class="ext-panel">
+      <div class="ext-header">
+        <div class="ext-flow-card">
+          <div class="ext-flow-icon">⚡</div>
+          <div>
+            <div class="ext-flow-name">JiraGraphTest</div>
+            <div class="ext-env"><span class="ext-env-dot"></span>Process Digitalization DEV</div>
+          </div>
+        </div>
+        <div class="ext-copy-row">
+          <button class="ext-copy-btn primary">📋 Copy JSON</button>
+          <button class="ext-copy-btn secondary">⬇ Export JSON</button>
+        </div>
+        <div class="ext-section-label">Developer Utilities</div>
+      </div>
+      <div class="ext-tools">
+        <div class="tool-row">
+          <div class="tool-icon">🔍</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Quick Copy Action</div>
+            <div class="tool-row-desc">Search and copy any action by name</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">☰</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Select Actions to Copy</div>
+            <div class="tool-row-desc">Multi-select actions for bulk copy</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">🔌</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Copy Connection Refs</div>
+            <div class="tool-row-desc">Extract connection reference keys</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">⏱</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Run History &amp; Errors</div>
+            <div class="tool-row-desc">View and inspect past run failures</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">🌐</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Environment Variables</div>
+            <div class="tool-row-desc">Browse Dataverse env vars &amp; copy references</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">{}</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Expression Inspector</div>
+            <div class="tool-row-desc">Scan and decode all flow expressions</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">⚡</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Copy Trigger</div>
+            <div class="tool-row-desc">Copy the trigger configuration</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">📦</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Variable Tracker</div>
+            <div class="tool-row-desc">Find and track all flow variables</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+        <div class="tool-row">
+          <div class="tool-icon">🛡</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Analyze Flow</div>
+            <div class="tool-row-desc">Audit flow against best practices</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SCREENSHOT 2: Run History + Performance tab
+═══════════════════════════════════════════════════════════════════ -->
+<div class="shot" id="shot-runs">
+  <div class="browser-bar">
+    <div class="browser-dots"><span></span><span></span><span></span></div>
+    <div class="browser-url">
+      <span class="lock">🔒</span>
+      <span class="url-text">make.powerautomate.com/environments/…/flows/…</span>
+    </div>
+    <div class="browser-ext">F</div>
+  </div>
+  <div class="browser-content">
+    <div class="pa-page">
+      <div class="pa-topbar">
+        <div class="pa-logo"><svg viewBox="0 0 18 18" fill="none"><path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#742774"/></svg> Power Automate</div>
+        <div class="pa-flow-name">JiraGraphTest</div>
+        <div class="pa-top-actions"><button class="pa-btn">Save</button><button class="pa-btn primary">Test</button></div>
+      </div>
+      <div class="pa-canvas">
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f4fd">🖐</div><div><div class="flow-action-name">Manually trigger a flow</div><div class="flow-action-type">Trigger</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f8ef">🌐</div><div><div class="flow-action-name">HTTP</div><div class="flow-action-type">HTTP</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#f3e8ff">⚙️</div><div><div class="flow-action-name">Parse JSON – Access Token</div><div class="flow-action-type">Data Operation</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f8ef">🌐</div><div><div class="flow-action-name">HTTP 2</div><div class="flow-action-type">HTTP</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#fef9e7">🤖</div><div><div class="flow-action-name">Run a prompt</div><div class="flow-action-type">AI Builder</div></div><div class="flow-action-menu">···</div></div></div>
+      </div>
+      <div class="caption">
+        <div class="caption-title">⚡ Performance View</div>
+        <div class="caption-body">Every action ranked by duration. Spot bottlenecks in seconds — no need to open each action manually.</div>
+      </div>
+    </div>
+
+    <div class="ext-panel">
+      <div class="ext-header">
+        <div class="ext-flow-card">
+          <div class="ext-flow-icon">⚡</div>
+          <div>
+            <div class="ext-flow-name">JiraGraphTest</div>
+            <div class="ext-env"><span class="ext-env-dot"></span>Process Digitalization DEV</div>
+          </div>
+        </div>
+        <div class="ext-copy-row">
+          <button class="ext-copy-btn primary">📋 Copy JSON</button>
+          <button class="ext-copy-btn secondary">⬇ Export JSON</button>
+        </div>
+      </div>
+
+      <!-- runs stats -->
+      <div class="runs-stats">
+        <div class="stats-row">
+          <span class="stat-badge green">9 Succeeded</span>
+          <span class="stat-trend">→ Stable</span>
+        </div>
+        <div class="sparkline">
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar" style="height:65%"></div>
+          <div class="spark-bar" style="height:50%"></div>
+          <div class="spark-bar" style="height:80%"></div>
+          <div class="spark-bar" style="height:60%"></div>
+          <div class="spark-bar" style="height:70%"></div>
+          <div class="spark-bar" style="height:100%"></div>
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar" style="height:65%"></div>
+        </div>
+        <div class="pass-rate"><strong>100%</strong> pass rate · 9 runs</div>
+      </div>
+
+      <!-- performance view of a run -->
+      <div class="back-btn">‹ Run from today 15:27</div>
+      <div class="detail-tabs">
+        <div class="detail-tab">✕ Errors</div>
+        <div class="detail-tab active">⚡ Performance</div>
+      </div>
+      <div class="perf-summary">5 actions · 1,140 ms total tracked time</div>
+      <div class="perf-list">
+        <div class="perf-row">
+          <div class="perf-row-head"><div class="perf-dot green"></div><div class="perf-name">HTTP 2</div><div class="perf-dur">620 ms</div></div>
+          <div class="perf-track"><div class="perf-fill green" style="width:100%"></div></div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-row-head"><div class="perf-dot green"></div><div class="perf-name">HTTP</div><div class="perf-dur">310 ms</div></div>
+          <div class="perf-track"><div class="perf-fill green" style="width:50%"></div></div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-row-head"><div class="perf-dot green"></div><div class="perf-name">Run_a_prompt</div><div class="perf-dur">150 ms</div></div>
+          <div class="perf-track"><div class="perf-fill yellow" style="width:24%"></div></div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-row-head"><div class="perf-dot green"></div><div class="perf-name">Parse_JSON_-_Access_Token</div><div class="perf-dur">38 ms</div></div>
+          <div class="perf-track"><div class="perf-fill green" style="width:6%"></div></div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-row-head"><div class="perf-dot green"></div><div class="perf-name">manual</div><div class="perf-dur">22 ms</div></div>
+          <div class="perf-track"><div class="perf-fill green" style="width:4%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SCREENSHOT 3: Select Actions to Copy
+═══════════════════════════════════════════════════════════════════ -->
+<div class="shot" id="shot-picker">
+  <div class="browser-bar">
+    <div class="browser-dots"><span></span><span></span><span></span></div>
+    <div class="browser-url">
+      <span class="lock">🔒</span>
+      <span class="url-text">make.powerautomate.com/environments/…/flows/…</span>
+    </div>
+    <div class="browser-ext">F</div>
+  </div>
+  <div class="browser-content">
+    <div class="pa-page">
+      <div class="pa-topbar">
+        <div class="pa-logo"><svg viewBox="0 0 18 18" fill="none"><path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#742774"/></svg> Power Automate</div>
+        <div class="pa-flow-name">JiraGraphTest</div>
+        <div class="pa-top-actions"><button class="pa-btn">Save</button><button class="pa-btn primary">Test</button></div>
+      </div>
+      <div class="pa-canvas">
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f4fd">🖐</div><div><div class="flow-action-name">Manually trigger a flow</div><div class="flow-action-type">Trigger</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f8ef">🌐</div><div><div class="flow-action-name">HTTP</div><div class="flow-action-type">HTTP</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#f3e8ff">⚙️</div><div><div class="flow-action-name">Parse JSON – Access Token</div><div class="flow-action-type">Data Operation</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f8ef">🌐</div><div><div class="flow-action-name">HTTP 2</div><div class="flow-action-type">HTTP</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#fef9e7">🤖</div><div><div class="flow-action-name">Run a prompt</div><div class="flow-action-type">AI Builder</div></div><div class="flow-action-menu">···</div></div></div>
+      </div>
+      <div class="caption">
+        <div class="caption-title">☰ Select Actions to Copy</div>
+        <div class="caption-body">Check individual actions or right-click to select an entire dependency chain. Copy as clean JSON in one click.</div>
+      </div>
+    </div>
+
+    <div class="ext-panel">
+      <div class="ext-header">
+        <div class="ext-flow-card">
+          <div class="ext-flow-icon">⚡</div>
+          <div>
+            <div class="ext-flow-name">JiraGraphTest</div>
+            <div class="ext-env"><span class="ext-env-dot"></span>Process Digitalization DEV</div>
+          </div>
+        </div>
+        <div class="ext-copy-row">
+          <button class="ext-copy-btn primary">📋 Copy JSON</button>
+          <button class="ext-copy-btn secondary">⬇ Export JSON</button>
+        </div>
+      </div>
+
+      <div class="ext-tools" style="padding:0 16px 0; flex:0 0 auto;">
+        <div class="tool-row active">
+          <div class="tool-icon">☰</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Select Actions to Copy</div>
+            <div class="tool-row-desc">Multi-select actions for bulk copy</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="picker-search-bar" style="margin-top:10px">
+        <span style="color:#aab;font-size:12px">🔍</span>
+        <input type="text" placeholder="Filter actions…" readonly>
+        <span style="font-size:10.5px;color:#3b7ef5;font-weight:600;cursor:pointer;white-space:nowrap">Deselect all</span>
+      </div>
+      <div class="picker-hint">Right-click any action to select it and all its dependencies</div>
+
+      <div class="picker-list">
+        <div class="picker-row" style="background:#fff8ed">
+          <div class="picker-cb unchecked" style="border-color:#f59e0b"></div>
+          <div class="picker-name" style="color:#92400e">manual</div>
+          <div class="picker-type-badge manual">Trigger</div>
+        </div>
+        <div class="picker-row">
+          <div class="picker-cb"></div>
+          <div class="picker-name">HTTP</div>
+          <div class="picker-type-badge http">HTTP</div>
+          <div class="picker-type-badge succeeded" style="margin-left:4px">Succeeded</div>
+        </div>
+        <div class="picker-row">
+          <div class="picker-cb"></div>
+          <div class="picker-name">Parse_JSON_-_Access_Tok…</div>
+          <div class="picker-type-badge parse">Parse JSON</div>
+          <div class="picker-type-badge succeeded" style="margin-left:4px">Succeeded</div>
+        </div>
+        <div class="picker-row">
+          <div class="picker-cb"></div>
+          <div class="picker-name">HTTP_2</div>
+          <div class="picker-type-badge http">HTTP</div>
+          <div class="picker-type-badge succeeded" style="margin-left:4px">Succeeded</div>
+        </div>
+        <div class="picker-row">
+          <div class="picker-cb"></div>
+          <div class="picker-name">Run_a_prompt</div>
+          <div class="picker-type-badge ai">Dataverse</div>
+          <div class="picker-type-badge succeeded" style="margin-left:4px">Succeeded</div>
+        </div>
+      </div>
+
+      <div class="picker-footer">
+        <span class="picker-count">4 / 4 selected</span>
+        <button class="picker-copy-btn">Copy JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SCREENSHOT 4: Analyze Flow — lint + scores
+═══════════════════════════════════════════════════════════════════ -->
+<div class="shot" id="shot-lint">
+  <div class="browser-bar">
+    <div class="browser-dots"><span></span><span></span><span></span></div>
+    <div class="browser-url">
+      <span class="lock">🔒</span>
+      <span class="url-text">make.powerautomate.com/environments/…/flows/…</span>
+    </div>
+    <div class="browser-ext">F</div>
+  </div>
+  <div class="browser-content">
+    <div class="pa-page">
+      <div class="pa-topbar">
+        <div class="pa-logo"><svg viewBox="0 0 18 18" fill="none"><path d="M9 1L2 5v8l7 4 7-4V5L9 1z" fill="#742774"/></svg> Power Automate</div>
+        <div class="pa-flow-name">JiraGraphTest</div>
+        <div class="pa-top-actions"><button class="pa-btn">Save</button><button class="pa-btn primary">Test</button></div>
+      </div>
+      <div class="pa-canvas">
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f4fd">🖐</div><div><div class="flow-action-name">Manually trigger a flow</div><div class="flow-action-type">Trigger</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f8ef">🌐</div><div><div class="flow-action-name">HTTP</div><div class="flow-action-type">HTTP</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#f3e8ff">⚙️</div><div><div class="flow-action-name">Parse JSON – Access Token</div><div class="flow-action-type">Data Operation</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#e8f8ef">🌐</div><div><div class="flow-action-name">HTTP 2</div><div class="flow-action-type">HTTP</div></div><div class="flow-action-menu">···</div></div></div>
+        <div class="flow-connector"></div>
+        <div class="flow-action"><div class="flow-action-inner"><div class="flow-icon" style="background:#fef9e7">🤖</div><div><div class="flow-action-name">Run a prompt</div><div class="flow-action-type">AI Builder</div></div><div class="flow-action-menu">···</div></div></div>
+      </div>
+      <div class="caption">
+        <div class="caption-title">🛡 Analyze Flow</div>
+        <div class="caption-body">35 best-practice rules. Instant complexity, maintainability and reliability scores — catch issues before they hit production.</div>
+      </div>
+    </div>
+
+    <div class="ext-panel">
+      <div class="ext-header">
+        <div class="ext-flow-card">
+          <div class="ext-flow-icon">⚡</div>
+          <div>
+            <div class="ext-flow-name">JiraGraphTest</div>
+            <div class="ext-env"><span class="ext-env-dot"></span>Process Digitalization DEV</div>
+          </div>
+        </div>
+        <div class="ext-copy-row">
+          <button class="ext-copy-btn primary">📋 Copy JSON</button>
+          <button class="ext-copy-btn secondary">⬇ Export JSON</button>
+        </div>
+      </div>
+
+      <div class="ext-tools" style="padding:0 16px 0;flex:0 0 auto;">
+        <div class="tool-row active">
+          <div class="tool-icon">🛡</div>
+          <div class="tool-row-text">
+            <div class="tool-row-title">Analyze Flow</div>
+            <div class="tool-row-desc">Audit flow against best practices</div>
+          </div>
+          <div class="tool-row-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="lint-scores" style="margin-top:10px">
+        <div class="score-card">
+          <div class="score-label">Complexity</div>
+          <div class="score-val green">Low</div>
+          <div class="score-sub">CC = 1</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">Maintainability</div>
+          <div class="score-val yellow">72</div>
+          <div class="score-sub">/ 100</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">Reliability Risk</div>
+          <div class="score-val red">28</div>
+          <div class="score-sub">lower = better</div>
+        </div>
+      </div>
+
+      <div class="lint-list">
+        <div class="lint-row">
+          <div class="lint-sev">⚠️</div>
+          <div><div class="lint-rule">No error handling on HTTP action</div><div class="lint-action">HTTP · HTTP 2</div></div>
+        </div>
+        <div class="lint-row">
+          <div class="lint-sev">⚠️</div>
+          <div><div class="lint-rule">Missing retry policy on HTTP action</div><div class="lint-action">HTTP · HTTP 2</div></div>
+        </div>
+        <div class="lint-row">
+          <div class="lint-sev">⚠️</div>
+          <div><div class="lint-rule">No flow description</div><div class="lint-action">Flow level</div></div>
+        </div>
+        <div class="lint-row">
+          <div class="lint-sev">ℹ️</div>
+          <div><div class="lint-rule">Hardcoded URL in HTTP action</div><div class="lint-action">HTTP</div></div>
+        </div>
+        <div class="lint-row">
+          <div class="lint-sev">ℹ️</div>
+          <div><div class="lint-rule">Default action name</div><div class="lint-action">HTTP · HTTP 2</div></div>
+        </div>
+        <div class="lint-row">
+          <div class="lint-sev">ℹ️</div>
+          <div><div class="lint-rule">Send HTTP request without checking status</div><div class="lint-action">HTTP 2</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
