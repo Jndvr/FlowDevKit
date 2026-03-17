@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FlowDevKit — Icon Generator</title>
+<style>
+  body { background: #1a1c23; display: flex; flex-direction: column; align-items: center; gap: 32px; padding: 40px; font-family: sans-serif; }
+  .row { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #888; font-size: 11px; font-family: monospace; }
+  canvas { image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<div class="row" id="previews"></div>
+
+<script>
+// ── Design parameters ──────────────────────────────────────────────
+const BLUE  = '#3a82f7';
+const BLUE2 = '#2563eb';   // slightly darker for gradient bottom
+const WHITE = '#ffffff';
+
+function drawIcon(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const s = size;
+
+  // ── background: rounded rect with gradient ──
+  const r = s * 0.22; // corner radius
+  const grad = ctx.createLinearGradient(0, 0, 0, s);
+  grad.addColorStop(0, '#4f8ef7');
+  grad.addColorStop(1, '#2563eb');
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, r);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // ── icon glyph: scales with size ──
+  if (size <= 16) {
+    // At 16px: two thick columns suggesting a "flow" icon (like ≡ pipes)
+    // Simple: big F letter, very bold
+    drawF(ctx, s);
+  } else if (size === 32) {
+    // At 32px: simplified 2×2 grid (no +), thick gaps
+    drawGrid2x2(ctx, s);
+  } else {
+    // 48, 128: full grid + plus
+    drawGridPlus(ctx, s);
+  }
+
+  return c;
+}
+
+function drawF(ctx, s) {
+  // Bold white "F" — clean and legible at 16px
+  ctx.fillStyle = WHITE;
+  const pad  = Math.round(s * 0.22);
+  const sw   = Math.round(s * 0.22); // stroke width
+  const full = s - pad * 2;
+
+  // vertical bar
+  ctx.fillRect(pad, pad, sw, full);
+  // top horizontal
+  ctx.fillRect(pad, pad, full, sw);
+  // mid horizontal (a bit shorter)
+  const midY = Math.round(s * 0.52) - Math.floor(sw / 2);
+  ctx.fillRect(pad, midY, Math.round(full * 0.75), sw);
+}
+
+function drawGrid2x2(ctx, s) {
+  // 2×2 block grid, thick, clean — no plus sign
+  ctx.fillStyle = WHITE;
+  const pad = Math.round(s * 0.18);
+  const gap = Math.round(s * 0.11);
+  const cell = Math.round((s - pad * 2 - gap) / 2);
+
+  const x1 = pad,        y1 = pad;
+  const x2 = pad + cell + gap, y2 = pad + cell + gap;
+  const r  = Math.max(2, Math.round(s * 0.06));
+
+  for (const [x, y] of [[x1,y1],[x2,y1],[x1,y2],[x2,y2]]) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, cell, cell, r);
+    ctx.fill();
+  }
+}
+
+function drawGridPlus(ctx, s) {
+  // 2×2 grid + "+" mark in bottom-right cell
+  ctx.fillStyle = WHITE;
+
+  const pad  = Math.round(s * 0.15);
+  const gap  = Math.round(s * 0.08);
+  const cell = Math.round((s - pad * 2 - gap) / 2);
+  const r    = Math.max(3, Math.round(s * 0.05));
+
+  const positions = [
+    [pad,            pad],
+    [pad + cell + gap, pad],
+    [pad,            pad + cell + gap],
+  ];
+
+  for (const [x, y] of positions) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, cell, cell, r);
+    ctx.fill();
+  }
+
+  // bottom-right: draw a "+" inside a slightly dimmed cell
+  const bx = pad + cell + gap;
+  const by  = pad + cell + gap;
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, cell, cell, r);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // plus arms
+  const arm  = Math.round(cell * 0.55);
+  const thick = Math.max(3, Math.round(cell * 0.18));
+  const cx   = bx + Math.round(cell / 2);
+  const cy   = by + Math.round(cell / 2);
+  const armR = Math.round(thick / 2);
+
+  // horizontal
+  ctx.beginPath();
+  ctx.roundRect(cx - Math.round(arm/2), cy - Math.round(thick/2), arm, thick, armR);
+  ctx.fill();
+  // vertical
+  ctx.beginPath();
+  ctx.roundRect(cx - Math.round(thick/2), cy - Math.round(arm/2), thick, arm, armR);
+  ctx.fill();
+}
+
+// ── Render previews ────────────────────────────────────────────────
+const sizes = [16, 32, 48, 128];
+const container = document.getElementById('previews');
+
+sizes.forEach(sz => {
+  const canvas = drawIcon(sz);
+  // scale up for visibility
+  const scale  = Math.max(1, Math.round(120 / sz));
+  canvas.style.width  = (sz * scale) + 'px';
+  canvas.style.height = (sz * scale) + 'px';
+
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.appendChild(canvas);
+  cell.append(`${sz}×${sz}  (shown ${scale}×)`);
+  container.appendChild(cell);
+});
+
+// ── Export ─────────────────────────────────────────────────────────
+window.exportIcons = function() {
+  sizes.forEach(sz => {
+    const canvas = drawIcon(sz);
+    const a = document.createElement('a');
+    a.href     = canvas.toDataURL('image/png');
+    a.download = `icon${sz}.png`;
+    a.click();
+  });
+};
+</script>
+
+<button onclick="exportIcons()"
+  style="margin-top:16px;padding:12px 28px;background:#3a82f7;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
+  ⬇ Download all icon PNGs
+</button>
+</body>
+</html>
