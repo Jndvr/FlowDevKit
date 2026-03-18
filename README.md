@@ -387,6 +387,15 @@ Each finding shows a severity icon, rule name, and the action it refers to. Find
 
 ---
 
+## Roadmap
+
+| | Item |
+|---|---|
+| 🔲 | **Paste actions between flows** — copy actions from one flow and paste them directly into another, without touching JSON manually |
+| 🔲 | **Firefox extension** — port FlowDevKit to Firefox via the WebExtensions API |
+
+---
+
 ## Project Structure
 
 ```
