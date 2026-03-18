@@ -87,7 +87,7 @@ For GCC, GovCloud, or sovereign clouds — enter your full API host in the **Cus
 | Mode | What's included |
 |---|---|
 | **Definition only** | `triggers` + `actions` — lighter and portable |
-| **Full export** | + `connectionReferences` — needed when importing into another environment |
+| **Full export** | + `connectionReferences` — includes connector metadata alongside the flow definition |
 
 ---
 
@@ -99,7 +99,7 @@ For GCC, GovCloud, or sovereign clouds — enter your full API host in the **Cus
 Copies the complete flow definition to your clipboard. What gets copied depends on the **Export Format** setting:
 
 - **Definition only** — includes `triggers` and `actions` only (most common use case — share with a colleague or save for reference)
-- **Full export** — also includes `connectionReferences` (required when the recipient needs to re-map connections in a different environment)
+- **Full export** — also includes `connectionReferences` (includes connector metadata alongside the flow definition)
 
 After copying, a toast confirms how many actions and the trigger name were included.
 
