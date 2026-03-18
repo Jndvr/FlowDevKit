@@ -139,7 +139,7 @@ kofiBtn?.addEventListener("click", () => {
   chrome.tabs.create({ url: "https://ko-fi.com/jndvr" });
 });
 feedbackBtn?.addEventListener("click", () => {
-  chrome.tabs.create({ url: "https://www.linkedin.com/in/janduever/" });
+  chrome.tabs.create({ url: "https://tally.so/r/yPD40B" });
 });
 
 // ── Debug log copy ────────────────────────────────────────────────────────────

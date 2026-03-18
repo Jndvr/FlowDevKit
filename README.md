@@ -466,6 +466,13 @@ Have a bug, feature request, or idea? Submit it here:
 
 ---
 
+## Feedback & Contact
+
+Built this for myself — if it helps you too, I'd love to hear about it.
+Reach out on [LinkedIn](https://www.linkedin.com/in/janduever/) or open a [GitHub Issue](https://github.com/Jndvr/FlowDevKit/issues).
+
+---
+
 ## License
 
 Source-available — free to use, not licensed for redistribution or use in competing products. See [LICENSE](LICENSE) for full terms. For redistribution or partnership enquiries contact [github.com/Jndvr](https://github.com/Jndvr).
