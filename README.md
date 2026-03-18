@@ -464,7 +464,7 @@ Have a bug, feature request, or idea? Submit it here:
 
 [![Feedback](https://img.shields.io/badge/Give%20Feedback-Tally-4F46E5?logo=data:image/svg+xml;base64,)](https://tally.so/r/yPD40B)
 
-Using it and want to share feedback or just connect? [Find me on LinkedIn](https://www.linkedin.com/in/janduever/).
+[![LinkedIn](https://img.shields.io/badge/Connect-LinkedIn-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/janduever/)
 
 ---
 
