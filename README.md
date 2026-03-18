@@ -458,7 +458,7 @@ FlowDevKit/
 
 If FlowDevKit saves you time, consider buying me a coffee:
 
-[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/jndvr)
+[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/jndvr) [![LinkedIn](https://img.shields.io/badge/Connect-LinkedIn-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/janduever/)
 
 Have a bug, feature request, or idea? Submit it here:
 
