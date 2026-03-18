@@ -45,6 +45,7 @@ const modeBtns          = document.querySelectorAll(".mode-seg-btn");
 const toastClose        = document.getElementById("toastClose");
 const toastReload       = document.getElementById("toastReload");
 const kofiBtn           = document.getElementById("kofiBtn");
+const linkedinBtn       = document.getElementById("linkedinBtn");
 const feedbackBtn       = document.getElementById("feedbackBtn");
 const footerVersion     = document.getElementById("footerVersion");
 const refreshContextBtn = document.getElementById("refreshContextBtn");
@@ -137,6 +138,9 @@ if (footerVersion) footerVersion.textContent = `v${chrome.runtime.getManifest().
 
 kofiBtn?.addEventListener("click", () => {
   chrome.tabs.create({ url: "https://ko-fi.com/jndvr" });
+});
+linkedinBtn?.addEventListener("click", () => {
+  chrome.tabs.create({ url: "https://www.linkedin.com/in/janduever/" });
 });
 feedbackBtn?.addEventListener("click", () => {
   chrome.tabs.create({ url: "https://tally.so/r/yPD40B" });
