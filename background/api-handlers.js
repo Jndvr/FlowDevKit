@@ -14,7 +14,10 @@ export async function handleFetchFlowList(message, sendResponse) {
     const data = await result.res.json();
     sendResponse({ flows: data.value || [] });
   } catch (e) {
-    sendResponse({ flows: [], error: e.message });
+    const msg = /unexpected token.*<!doctype/i.test(e.message)
+      ? "Session expired — please refresh the Power Automate tab and try again."
+      : e.message;
+    sendResponse({ flows: [], error: msg });
   }
 }
 
@@ -54,6 +57,11 @@ export async function handleFetchFlow(message, sendResponse) {
     } catch (err) {
       lastError = err.message;
     }
+  }
+  // Provide a clearer message when the API returned HTML instead of JSON (e.g. login redirect)
+  const isHtmlError = lastError && /unexpected token.*<!doctype/i.test(lastError);
+  if (isHtmlError) {
+    lastError = "Session expired or authentication failed — the API returned a login page instead of data. Please refresh the Power Automate tab and try again.";
   }
   sendResponse({ error: lastError || "All API endpoints failed." });
 }
@@ -152,7 +160,10 @@ export async function handleFetchRuns(message, sendResponse) {
     const data = await result.res.json();
     sendResponse({ runs: data.value || [] });
   } catch (err) {
-    sendResponse({ error: err.message || "Fetch failed." });
+    const msg = /unexpected token.*<!doctype/i.test(err.message)
+      ? "Session expired — please refresh the Power Automate tab and try again."
+      : (err.message || "Fetch failed.");
+    sendResponse({ error: msg });
   }
 }
 
@@ -169,7 +180,10 @@ export async function handleFetchRunDetail(message, sendResponse) {
     const data = await result.res.json();
     sendResponse({ run: data });
   } catch (err) {
-    sendResponse({ error: err.message || "Fetch failed." });
+    const msg = /unexpected token.*<!doctype/i.test(err.message)
+      ? "Session expired — please refresh the Power Automate tab and try again."
+      : (err.message || "Fetch failed.");
+    sendResponse({ error: msg });
   }
 }
 
@@ -181,10 +195,18 @@ export async function handleFetchRunIO(message, sendResponse) {
     // which is incompatible with credentials: "include".
     const res = await fetch(ioUrl, { method: "GET" });
     if (!res.ok) { sendResponse({ error: `HTTP ${res.status}` }); return; }
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    if (!ct.includes("application/json") && !ct.includes("application/octet-stream")) {
+      sendResponse({ error: "Unexpected response type from run I/O URL." });
+      return;
+    }
     const data = await res.json();
     sendResponse({ data });
   } catch (err) {
-    sendResponse({ error: err.message || "Fetch failed." });
+    const msg = /unexpected token.*<!doctype/i.test(err.message)
+      ? "Session expired — please refresh the Power Automate tab and try again."
+      : (err.message || "Fetch failed.");
+    sendResponse({ error: msg });
   }
 }
 

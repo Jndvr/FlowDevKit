@@ -35,7 +35,19 @@ export async function fetchWithTokens(url, tokenList, extraOpts = {}) {
       clearTimeout(timer);
       const ms = Date.now() - t0;
       logEntry({ op, url: urlForLog, status: res.status, ms, scope: tokenAudience(tok) });
-      if (res.ok) return { res, tok };
+      if (res.ok) {
+        // Guard against endpoints that return 200 with an HTML login/redirect page
+        // instead of a proper 401. If Content-Type is not JSON, treat as failure.
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+        if (ct.includes("application/json") || ct.includes("application/octet-stream")) {
+          return { res, tok };
+        }
+        // HTML or unexpected content type — read body for diagnostics and fall through
+        lastRes = res;
+        lastBody = await res.text().catch(() => "");
+        logEntry({ op, url: urlForLog, status: res.status, ms, scope: tokenAudience(tok), note: `non-json ct: ${ct.slice(0, 60)}` });
+        break; // different tokens won't fix a content-type mismatch
+      }
       lastRes = res;
       lastBody = await res.text().catch(() => "");
       // Retry on any auth/forbidden error
