@@ -1,0 +1,76 @@
+TESTING INSTRUCTIONS FOR MICROSOFT EDGE ADD-ONS REVIEWERS
+==========================================================
+
+FlowDevKit is a developer tool for Microsoft Power Automate. It requires
+an active Power Automate session with at least one cloud flow to test.
+
+PREREQUISITES
+─────────────
+- A Microsoft 365 / Power Platform account with Power Automate access
+- At least one cloud flow in the environment (a simple "Manually trigger
+  a flow" → "Compose" action is sufficient)
+
+STEP-BY-STEP TESTING
+─────────────────────
+
+1. SIGN IN TO POWER AUTOMATE
+   • Open https://make.powerautomate.com in Microsoft Edge
+   • Sign in with your Microsoft 365 account
+   • Wait for the dashboard to fully load
+
+2. OPEN A CLOUD FLOW
+   • In the left nav, click "My flows"
+   • Click on any cloud flow name to open its detail page
+   • You should see the flow's trigger and actions listed on the page
+   • The URL should look like:
+     https://make.powerautomate.com/environments/{id}/flows/{id}
+
+3. TEST "COPY JSON" (primary feature)
+   • Click the FlowDevKit extension icon in the Edge toolbar
+   • The popup opens; the flow name should appear in the header strip
+   • Click "Copy JSON"
+   • Expected: green success toast — "Copied to clipboard!"
+   • Paste into any text editor to verify JSON output
+
+4. TEST "EXPORT JSON"
+   • Click "Export JSON" (next to Copy JSON)
+   • Expected: a .json file downloads with the flow definition
+
+5. TEST DEVELOPER UTILITIES
+   • "Quick Copy Action" → type a letter → see matching actions
+   • "Select Actions to Copy" → checkboxes appear for each action →
+     select some → click "Copy JSON"
+   • "Expression Inspector" → lists all expressions used in the flow
+   • "Analyze Flow" → shows best-practice audit with scores
+   • "Variable Tracker" → lists all flow variables
+   • "Failed Run Errors" → shows recent run history and failures
+   • "Flow Diff" → paste a previous JSON, click "Compare with live flow"
+
+6. TEST SETTINGS
+   • Click the gear icon → Region, Format, and Debug options appear
+   • Toggle light/dark theme with the sun/moon icon
+
+IMPORTANT NOTES
+───────────────
+• The extension ONLY works when a Power Automate flow is open in the
+  active tab. If you see "Open a Power Automate flow first", navigate
+  to a specific flow page (not the flow list).
+
+• If you see "Session expired", refresh the Power Automate tab (F5)
+  and try again. This can happen if the browser session has been idle.
+
+• The extension does NOT require its own login — it reuses the existing
+  Power Automate session tokens from the browser.
+
+• Supported pages:
+  - make.powerautomate.com (primary)
+  - make.powerapps.com (solution explorer)
+  - copilotstudio.microsoft.com (Copilot Studio flows)
+
+• Keyboard shortcut: Alt+Shift+F opens the extension popup.
+
+PRIVACY
+───────
+The extension does not collect, transmit, or store any user data
+externally. All data stays in the browser. See the bundled
+privacy-policy.html for details.

@@ -11,6 +11,7 @@
   <div class="header">
     <div class="header-logo"><img src="icons/icon128.png" alt="FlowDevKit"></div>
     <span class="header-title">FlowDevKit</span>
+    <button class="icon-btn" id="helpBtn" title="Getting started guide" aria-label="Getting started guide"><i class="bi bi-question-circle" aria-hidden="true"></i></button>
     <button class="icon-btn" id="dockBtn" title="Open as side panel" aria-label="Open as side panel"><i class="bi bi-layout-sidebar-reverse" aria-hidden="true"></i></button>
     <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"><i class="bi bi-sun" aria-hidden="true"></i></button>
     <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings"><i class="bi bi-gear" aria-hidden="true"></i></button>
@@ -68,6 +69,26 @@
       <i class="bi bi-exclamation-triangle" style="flex-shrink:0"></i>
       <span style="flex:1">Flow context may be stale — tab changed</span>
       <button id="refreshContextBtn" style="background:var(--warn);color:#000;border:none;border-radius:4px;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;flex-shrink:0">Reload</button>
+    </div>
+
+    <div class="guide" id="guidePanel" style="display:none">
+      <div class="guide-header" id="guideToggle">
+        <i class="bi bi-book"></i>
+        <span class="guide-header-text">Getting Started</span>
+        <i class="bi bi-chevron-down guide-chevron"></i>
+      </div>
+      <div class="guide-body">
+        <ol class="guide-steps">
+          <li>Open <strong>Power Automate</strong> at <code>make.powerautomate.com</code> and sign in</li>
+          <li>Navigate to <strong>My flows</strong> and click into any cloud flow to open it</li>
+          <li>Click the <strong>FlowDevKit</strong> icon in your browser toolbar (or press <code>Alt+Shift+F</code>)</li>
+          <li>Use <strong>Copy JSON</strong> to copy the flow definition, or explore the developer utilities below</li>
+        </ol>
+        <div class="guide-tip">
+          <strong>Tip:</strong> FlowDevKit also works on <code>make.powerapps.com</code> and <code>copilotstudio.microsoft.com</code>. You can dock it as a side panel using the <i class="bi bi-layout-sidebar-reverse" style="font-size:11px"></i> button.
+        </div>
+        <div class="guide-dismiss"><button id="guideDismissBtn">Don't show again</button></div>
+      </div>
     </div>
 
     <div class="export-row">

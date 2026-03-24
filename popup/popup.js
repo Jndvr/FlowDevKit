@@ -51,6 +51,10 @@ const refreshContextBtn = document.getElementById("refreshContextBtn");
 const pastePanel        = document.getElementById("pastePanel");
 const pasteBtn          = document.getElementById("pasteBtn");
 const debugCopyBtn      = document.getElementById("debugCopyBtn");
+const guidePanel        = document.getElementById("guidePanel");
+const guideToggle       = document.getElementById("guideToggle");
+const guideDismissBtn   = document.getElementById("guideDismissBtn");
+const helpBtn           = document.getElementById("helpBtn");
 
 // ── Button HTML constants ─────────────────────────────────────────────────────
 const COPY_BTN_HTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0">
@@ -372,6 +376,37 @@ exportJsonBtn.addEventListener("click", async () => {
   }
 });
 
+// ── Getting Started guide ─────────────────────────────────────────────────────
+// Shown automatically on first install or when no flow is detected.
+// Persisted via chrome.storage.local so it survives popup reopens.
+let _guideDismissed = false;
+
+chrome.storage.local.get("guideDismissed", (r) => {
+  _guideDismissed = !!r?.guideDismissed;
+});
+
+function showGuide(visible) {
+  if (guidePanel) guidePanel.style.display = (visible && !_guideDismissed) ? "" : "none";
+}
+
+guideToggle?.addEventListener("click", () => {
+  guidePanel?.classList.toggle("collapsed");
+});
+
+guideDismissBtn?.addEventListener("click", () => {
+  _guideDismissed = true;
+  chrome.storage.local.set({ guideDismissed: true });
+  if (guidePanel) guidePanel.style.display = "none";
+});
+
+helpBtn?.addEventListener("click", () => {
+  if (!guidePanel) return;
+  const isVisible = guidePanel.style.display !== "none";
+  guidePanel.style.display = isVisible ? "none" : "";
+  guidePanel.classList.remove("collapsed");
+  helpBtn.classList.toggle("active", !isVisible);
+});
+
 // ── Shared: load flow context and update UI ───────────────────────────────────
 async function loadFlowContext({ invalidateCaches = false } = {}) {
   if (invalidateCaches) {
@@ -391,10 +426,12 @@ async function loadFlowContext({ invalidateCaches = false } = {}) {
       updateFlowStrip(result.displayName, ctx.tab?.url || "", ctx.environmentId);
       fetchAndCacheEnvName(ctx.environmentId, ctx.tokens);
       showContextBanner(false);
+      showGuide(false);
     }
   } catch {
     const flowStrip = document.getElementById("flowStrip");
     if (flowStrip) flowStrip.style.display = "none";
+    showGuide(true);
   } finally {
     setFlowStripRefreshing(false);
   }

@@ -853,3 +853,66 @@ body.sidepanel {
   transition: opacity 0.15s;
 }
 .ev-auth-open-btn:hover { opacity: 0.88; }
+
+/* ── Getting Started guide ─────────────────────────────────────────────── */
+.guide {
+  margin: 0 10px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: guideFadeIn 0.25s ease;
+}
+@keyframes guideFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.guide-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer; user-select: none;
+  background: var(--accent-dim);
+  border-bottom: 1px solid var(--border-soft);
+}
+.guide-header i { color: var(--accent); font-size: 15px; flex-shrink: 0; }
+.guide-header-text { flex: 1; font-size: 12px; font-weight: 600; color: var(--text); }
+.guide-chevron {
+  font-size: 11px; color: var(--text-3); transition: transform 0.2s;
+}
+.guide.collapsed .guide-chevron { transform: rotate(-90deg); }
+.guide.collapsed .guide-body { display: none; }
+.guide-body { padding: 10px 12px 12px; }
+.guide-steps { list-style: none; counter-reset: step; }
+.guide-steps li {
+  counter-increment: step;
+  position: relative;
+  padding: 6px 0 6px 28px;
+  font-size: 11.5px; line-height: 1.55;
+  color: var(--text-2);
+}
+.guide-steps li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent-dim); color: var(--accent);
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.guide-steps li + li { border-top: 1px solid var(--border-soft); }
+.guide-steps code {
+  background: var(--surface-2); padding: 1px 5px; border-radius: 3px;
+  font-size: 10.5px; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  color: var(--accent);
+}
+.guide-steps strong { color: var(--text); font-weight: 600; }
+.guide-tip {
+  margin-top: 8px; padding: 7px 10px;
+  background: var(--surface-2); border-radius: 6px;
+  font-size: 10.5px; color: var(--text-3); line-height: 1.5;
+}
+.guide-tip strong { color: var(--text-2); }
+.guide-dismiss {
+  margin-top: 8px; display: flex; justify-content: flex-end;
+}
+.guide-dismiss button {
+  background: none; border: none; color: var(--text-3);
+  font-size: 10.5px; cursor: pointer; padding: 2px 4px;
+}
+.guide-dismiss button:hover { color: var(--text-2); }
