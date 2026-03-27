@@ -13,7 +13,7 @@ import { normalizeAuth, ensureAuth, topoSortActions } from "../../shared/flow-ut
 import { resolveFlowContext, buildApiUrl } from "../context.js";
 import {
   registerPanel, closeAllPanels, setActiveBtn, hideStatus, showStatus,
-  updateFlowStrip, setUndoPasteRef,
+  updateFlowStrip, setUndoPasteRef, esc,
 } from "../ui.js";
 import { invalidatePickerCache } from "./picker.js";
 import { invalidateQuickCache } from "./quick-copy.js";
@@ -248,9 +248,9 @@ export function renderPastePanel(pastedItems, targetDef, targetDisplayName, ctx)
             ? `<span style="color:var(--warn);font-size:11px" title="New connector — may need connection setup">🔌</span>`
             : `<span style="color:var(--success);font-size:11px">✓</span>`
           }
-          ${p.name}
+          ${esc(p.name)}
         </div>
-        <div class="paste-action-meta">${ACTION_TYPE_MAP[p.actionDef?.type]?.label || p.actionDef?.type || "Unknown type"}</div>
+        <div class="paste-action-meta">${esc(ACTION_TYPE_MAP[p.actionDef?.type]?.label || p.actionDef?.type || "Unknown type")}</div>
       </div>
     `}).join("")}
   `;
@@ -278,7 +278,7 @@ export function renderPastePanel(pastedItems, targetDef, targetDisplayName, ctx)
       const row = document.createElement("div");
       row.className = "paste-connref-row";
       row.innerHTML = `
-        <span class="paste-connref-name">${c.key.replace(/^shared_/, "")}</span>
+        <span class="paste-connref-name">${esc(c.key.replace(/^shared_/, ""))}</span>
         <span class="paste-connref-badge ${c.status}">${c.status === "exists" ? "✓ exists" : "+ new"}</span>
       `;
       connSection.appendChild(row);
@@ -295,7 +295,7 @@ export function renderPastePanel(pastedItems, targetDef, targetDisplayName, ctx)
       <div class="paste-warning" style="border-color:var(--accent);background:var(--accent-dim)">
         <i class="bi bi-info-circle" style="color:var(--accent);font-size:14px;flex-shrink:0"></i>
         <div style="font-size:11.5px">
-          <strong>New connector${newConnectors.length > 1 ? "s" : ""}: ${connList}</strong>
+          <strong>New connector${newConnectors.length > 1 ? "s" : ""}: ${esc(connList)}</strong>
           <div style="margin-top:3px;color:var(--text-2)">
             A connection reference will be created. If no connection exists for this connector in your environment, you'll need to configure it in the designer after pasting.
           </div>

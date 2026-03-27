@@ -27,6 +27,16 @@ export function getActivePanelBtn() {
   return _panelBtns.find(b => b?.classList.contains("active-tool")) || null;
 }
 
+// ── HTML escaping ─────────────────────────────────────────────────────────────
+export function esc(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ── Toast ──────────────────────────────────────────────────────────────────────
 let _toastTimer = null;
 let _undoPasteBtn = null; // injected by popup.js after DOM is ready

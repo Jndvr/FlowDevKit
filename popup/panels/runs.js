@@ -3,7 +3,7 @@
  */
 import { API_VERSION } from "../../shared/constants.js";
 import { resolveFlowContext, buildApiUrl, getApiHost } from "../context.js";
-import { registerPanel, closeAllPanels, setActiveBtn, showStatus, handleApiError, updateFlowStrip } from "../ui.js";
+import { registerPanel, closeAllPanels, setActiveBtn, showStatus, handleApiError, updateFlowStrip, esc } from "../ui.js";
 
 const runsBtn          = document.getElementById("runsBtn");
 const runsPanel        = document.getElementById("runsPanel");
@@ -375,13 +375,13 @@ async function loadRunDetail(run) {
       el.innerHTML = `
         <div class="detail-head">
           <i class="bi bi-x-circle detail-icon fail"></i>
-          <span class="detail-name">${a.name}</span>
-          <span class="detail-badge ${a.status}">${a.status}</span>
+          <span class="detail-name">${esc(a.name)}</span>
+          <span class="detail-badge ${esc(a.status)}">${esc(a.status)}</span>
         </div>
         <div class="detail-body">
-          ${a.code ? `<div class="detail-code">${a.code}</div>` : ""}
-          ${a.msg ? `<div class="detail-msg">${a.msg}</div>` : ""}
-          <div class="io-wrap" id="io-${a.name.replace(/\W/g, '_')}">
+          ${a.code ? `<div class="detail-code">${esc(a.code)}</div>` : ""}
+          ${a.msg ? `<div class="detail-msg">${esc(a.msg)}</div>` : ""}
+          <div class="io-wrap" id="io-${esc(a.name.replace(/\W/g, '_'))}">
             <div class="io-loading">Loading inputs/outputs…</div>
           </div>
         </div>
@@ -452,10 +452,10 @@ async function loadRunDetail(run) {
       el.innerHTML = `
         <div class="detail-head">
           <i class="bi bi-skip-forward detail-icon skip"></i>
-          <span class="detail-name">${a.name}</span>
+          <span class="detail-name">${esc(a.name)}</span>
           <span class="detail-badge Skipped">Skipped</span>
         </div>
-        ${a.reason ? `<div class="detail-body"><div class="detail-skip-reason">${a.reason}</div></div>` : ""}
+        ${a.reason ? `<div class="detail-body"><div class="detail-skip-reason">${esc(a.reason)}</div></div>` : ""}
       `;
       detailList.appendChild(el);
     }

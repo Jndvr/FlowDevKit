@@ -5,7 +5,7 @@ import { flattenActions, buildSelectedActions, getUsedConnRefs, normalizeAuth, c
 import { resolveFlowContext, buildApiUrl } from "../context.js";
 import {
   registerPanel, closeAllPanels, setActiveBtn, hideStatus, showStatus,
-  updateFlowStrip, fetchAndCacheEnvName, makeTypePill, makeBadge,
+  updateFlowStrip, fetchAndCacheEnvName, makeTypePill, makeBadge, esc,
 } from "../ui.js";
 import { invalidateQuickCache } from "./quick-copy.js";
 
@@ -60,8 +60,8 @@ function renderPickerList(filter = "") {
       trigRow.className = "picker-trigger-row";
       trigRow.innerHTML = `
         <span class="trigger-icon">⚡</span>
-        <span class="picker-item-label" title="${tName}">${tName}</span>
-        <span class="picker-item-type">${tDef.type || "Trigger"}</span>
+        <span class="picker-item-label" title="${esc(tName)}">${esc(tName)}</span>
+        <span class="picker-item-type">${esc(tDef.type || "Trigger")}</span>
       `;
       pickerList.appendChild(trigRow);
     }
