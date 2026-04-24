@@ -1,12 +1,13 @@
 import { fetchWithTokens } from "./fetch-utils.js";
-import { getCachedDvToken } from "./dv-token-cache.js";
+import { getCachedDvToken, getCachedPaTokens } from "./dv-token-cache.js";
 
 const API_VERSION = "2016-11-01";
 
 export async function handleFetchFlowList(message, sendResponse) {
   const { listUrl, tokens = [] } = message;
+  const tokenList = [...new Set([...getCachedPaTokens(), ...tokens])];
   try {
-    const result = await fetchWithTokens(listUrl, tokens);
+    const result = await fetchWithTokens(listUrl, tokenList);
     if (result.failed) {
       sendResponse({ flows: [], error: `HTTP ${result.res?.status}: ${result.body?.slice(0, 200)}` });
       return;
@@ -29,7 +30,7 @@ export async function handleFetchFlow(message, sendResponse) {
     : null;
 
   const urlsToTry = [apiUrl, ppApiUrl, globalPpUrl, previewApiUrl].filter(Boolean);
-  const tokenList = tokens.length ? tokens : (token ? [token] : []);
+  const tokenList = [...new Set([...getCachedPaTokens(), ...(tokens.length ? tokens : (token ? [token] : []))])];
 
   let lastError = null;
   for (const url of urlsToTry) {
@@ -68,7 +69,7 @@ export async function handleFetchFlow(message, sendResponse) {
 
 export async function handlePatchFlow(message, sendResponse) {
   const { tokens = [], patchBodies, patchUrls, patchUrl } = message;
-  const candidates = [...new Set(tokens.filter(Boolean))];
+  const candidates = [...new Set([...getCachedPaTokens(), ...tokens.filter(Boolean)])];
   if (!candidates.length) candidates.push(null);
 
   const urlsToTry = patchUrls || (patchUrl ? [patchUrl] : []);
@@ -129,6 +130,7 @@ export async function handlePatchFlow(message, sendResponse) {
 
 export async function handleFetchEnv(message, sendResponse) {
   const { environmentId, tokens = [] } = message;
+  const tokenList = [...new Set([...getCachedPaTokens(), ...tokens])];
   const urls = [
     `https://${environmentId}.environment.api.powerplatform.com/usermanagement/environments/${environmentId}?api-version=2022-03-01-preview`,
     `https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/environments/${environmentId}?api-version=2021-04-01`,
@@ -136,7 +138,7 @@ export async function handleFetchEnv(message, sendResponse) {
   ];
   for (const url of urls) {
     try {
-      const result = await fetchWithTokens(url, tokens);
+      const result = await fetchWithTokens(url, tokenList);
       if (result.failed || !result.res?.ok) continue;
       const body = await result.res.text();
       const data = JSON.parse(body);
@@ -149,7 +151,7 @@ export async function handleFetchEnv(message, sendResponse) {
 
 export async function handleFetchRuns(message, sendResponse) {
   const { runsUrl, token, tokens = [] } = message;
-  const tokenList = tokens.length ? tokens : (token ? [token] : []);
+  const tokenList = [...new Set([...getCachedPaTokens(), ...(tokens.length ? tokens : (token ? [token] : []))])];
   try {
     const result = await fetchWithTokens(runsUrl, tokenList);
     if (result.failed) {
@@ -169,7 +171,7 @@ export async function handleFetchRuns(message, sendResponse) {
 
 export async function handleFetchRunDetail(message, sendResponse) {
   const { runUrl, token, tokens = [] } = message;
-  const tokenList = tokens.length ? tokens : (token ? [token] : []);
+  const tokenList = [...new Set([...getCachedPaTokens(), ...(tokens.length ? tokens : (token ? [token] : []))])];
   try {
     const result = await fetchWithTokens(runUrl, tokenList);
     if (result.failed) {
@@ -294,6 +296,7 @@ async function findDataverseToken(instanceHostname) {
 
 export async function handleFetchEnvVars(message, sendResponse) {
   const { environmentId, tokens = [] } = message;
+  const paTokenList = [...new Set([...getCachedPaTokens(), ...tokens])];
 
   // Step 1: Resolve the Dataverse instance URL via BAP / PP environment APIs
   let instanceUrl = null;
@@ -305,7 +308,7 @@ export async function handleFetchEnvVars(message, sendResponse) {
   for (const url of envMetaUrls) {
     try {
       // credentials:"omit" — these return ACAO:* which blocks credentialed requests
-      const result = await fetchWithTokens(url, tokens, { credentials: "omit" });
+      const result = await fetchWithTokens(url, paTokenList, { credentials: "omit" });
       if (result.failed || !result.res?.ok) continue;
       const data = JSON.parse(await result.res.text());
       instanceUrl = data?.properties?.linkedEnvironmentMetadata?.instanceUrl
@@ -361,7 +364,7 @@ export async function handleFetchEnvVars(message, sendResponse) {
   // (c) Last resort: PA-page tokens against the BAP-resolved URL — expected to 401
   //     for most envs, but included so single-tenant setups that share tokens still work.
   try {
-    const r = await fetchWithTokens(instanceUrl + oDataPath, tokens, { credentials: "omit" });
+    const r = await fetchWithTokens(instanceUrl + oDataPath, paTokenList, { credentials: "omit" });
     if (!r.failed && r.res?.ok) {
       const data = await r.res.json();
       sendResponse({ ok: true, vars: data.value || [], instanceUrl });
@@ -380,6 +383,7 @@ export async function handleFetchEnvVars(message, sendResponse) {
 
 export async function handleFetchConnections(message, sendResponse) {
   const { environmentId, connectorName, tokens = [] } = message;
+  const tokenList = [...new Set([...getCachedPaTokens(), ...tokens])];
   const ppHost = `${environmentId}.environment.api.powerplatform.com`;
   const apiId = `/providers/Microsoft.PowerApps/apis/${connectorName}`;
   const urls = [
@@ -391,7 +395,7 @@ export async function handleFetchConnections(message, sendResponse) {
   ];
   for (const url of urls) {
     try {
-      const result = await fetchWithTokens(url, tokens);
+      const result = await fetchWithTokens(url, tokenList);
       if (result.failed || !result.res?.ok) continue;
       const data = await result.res.json();
       const connections = data?.value || [];
